@@ -21,7 +21,7 @@ class SAI_Server:
             s.bind((self.host, self.port))
             s.listen()
 
-            print(f"☎️ SAI SERVER LISTENING ON {self.host}:{self.port}")
+            print(f"☎️  SAI SERVER LISTENING ON {self.host}:{self.port}")
 
             while True:  # Loop for incoming clients connections
                 conn, addr = s.accept()
@@ -45,7 +45,7 @@ class SAI_Server:
         command = parts[0]
 
         if command == "REGISTER":
-            self.register_user(conn, parts[1], parts[2], parts[3])
+            self.register_user(conn, parts[1], parts[2])
 
         elif command == "LOGIN":
             self.login_user(conn, parts[1], parts[2])
@@ -98,7 +98,7 @@ class SAI_Server:
     def log_event(self, event):
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        with open(self.log_file, "a") as log:
+        with open(self.log_file, "a", encoding="utf-8") as log:
             log.write(f"{current_time}: {event}\n")
 
 
