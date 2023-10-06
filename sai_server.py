@@ -21,7 +21,7 @@ class SAI_Server:
             s.bind((self.host, self.port))
             s.listen()
 
-            print(f"☎️  SAI SERVER LISTENING ON {self.host}:{self.port}")
+            print(f"☎️  SAI SERVER LISTENING ON {self.host}:{self.port}\n")
 
             while True:  # Loop for incoming clients connections
                 conn, addr = s.accept()
@@ -63,7 +63,7 @@ class SAI_Server:
 
         # Existing username check
         if username in self.users:
-            response = "🚨 USERNAME ALREADY IN USE PLEASE CHOOSE ANOTHER."
+            response = "🚨 USERNAME ALREADY IN USE PLEASE CHOOSE ANOTHER"
 
         else:
             # Add to username dictionary
@@ -71,9 +71,11 @@ class SAI_Server:
 
             # Event log register
             user_event = f"⭐ REGISTERED NEW USER: {username}"
+
+            print(user_event)
             self.log_event(user_event)
 
-            response = "✅ REGISTRATION SUCCESSFUL."
+            response = "✅ REGISTRATION SUCCESSFUL"
 
         # Client response
         conn.send(response.encode("utf-8"))

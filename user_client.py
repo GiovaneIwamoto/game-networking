@@ -31,9 +31,9 @@ class User_Client:
         self.send_message(command)
 
         response = self.receive_response()  # Receive response from server
+        print("")
         print(response)
 
-    # TODO:
     def login_user(self, username, password):
         command = f"LOGIN {username} {password}"
         self.send_message(command)
@@ -63,10 +63,36 @@ class User_Client:
         print("Connection closed.")
 
 
-client = User_Client("127.0.0.1", 4000)
-client.connect()
+def main():
+    # Connect user to SAI server
+    client = User_Client("127.0.0.1", 4000)
+    client.connect()
 
-# Testing
-client.register_user("Alice", "pass123")
+    # User welcome options
+    print("\n🤠 WELCOME TO TURFMASTERS 🏆 BETTING CHAMPIONS\n")
+    print("[1] REGISTER")
+    print("[2] LOGIN")
 
-# client.close_connection()
+    choice = input("\n📌 CHOOSE AN OPTION: ")
+
+    # Register user
+    if choice == "1":
+        username = input("\nEnter your username: ")
+        password = input("Enter your password: ")
+        client.register_user(username, password)
+
+    # Login
+    elif choice == "2":
+        username = input("\nEnter your username: ")
+        password = input("Enter your password: ")
+        client.login_user(username, password)
+
+    # Invalid option
+    else:
+        print("\n⛔ INVALID OPTION")
+
+    client.close_connection()
+
+
+if __name__ == "__main__":
+    main()
