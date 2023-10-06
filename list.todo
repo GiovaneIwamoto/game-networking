@@ -1,3 +1,4 @@
-Invalid option, restart server
 Register user must check game log file
 Create database for registered users
+Exit client sends message for server to log data
+Fix user client register username already in use

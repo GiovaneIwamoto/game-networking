@@ -68,28 +68,41 @@ def main():
     client = User_Client("127.0.0.1", 4000)
     client.connect()
 
-    # User welcome options
     print("\n🤠 WELCOME TO TURFMASTERS 🏆 BETTING CHAMPIONS\n")
-    print("[1] REGISTER")
-    print("[2] LOGIN")
 
-    choice = input("\n📌 CHOOSE AN OPTION: ")
+    while True:
+        # User welcome options
+        print("[1] REGISTER")
+        print("[2] LOGIN")
+        print("[3] EXIT CLIENT")
 
-    # Register user
-    if choice == "1":
-        username = input("\nEnter your username: ")
-        password = input("Enter your password: ")
-        client.register_user(username, password)
+        choice = input("\n📟 CHOOSE AN OPTION: ")
 
-    # Login
-    elif choice == "2":
-        username = input("\nEnter your username: ")
-        password = input("Enter your password: ")
-        client.login_user(username, password)
+        # Register user
+        if choice == "1":
+            print("\n📓 USER REGISTRATION")
+            username = input("ENTER YOUR USERNAME: ")
+            password = input("ENTER YOUR PASSWORD: ")
+            client.register_user(username, password)
+            break
 
-    # Invalid option
-    else:
-        print("\n⛔ INVALID OPTION")
+        # Login
+        elif choice == "2":
+            print("\n🔒 USER LOGIN")
+
+            username = input("USERNAME: ")
+            password = input("PASSWORD: ")
+            client.login_user(username, password)
+            break
+
+        # Exit client
+        elif choice == "3":
+            print("\n🚩 EXITING CLIENT")
+            break
+
+        # Invalid option
+        else:
+            print("\n⛔ INVALID OPTION, CHOOSE A VALID ONE\n")
 
     client.close_connection()
 
