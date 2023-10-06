@@ -40,23 +40,23 @@ class User_Client:
         response = self.receive_response()
         print(response)
 
-    def list_users_online(self):
-        command = "LIST-USER-ON-LINE"
-        self.send_message(command)
-        response = self.receive_response()
-        print(response)
+    # def list_users_online(self):
+    #     command = "LIST-USER-ON-LINE"
+    #     self.send_message(command)
+    #     response = self.receive_response()
+    #     print(response)
 
-    def list_users_playing(self):
-        command = "LIST-USER-PLAYING"
-        self.send_message(command)
-        response = self.receive_response()
-        print(response)
+    # def list_users_playing(self):
+    #     command = "LIST-USER-PLAYING"
+    #     self.send_message(command)
+    #     response = self.receive_response()
+    #     print(response)
 
-    def initiate_game(self, player1, player2):
-        command = f"GAME_INI {player1} {player2}"
-        self.send_message(command)
-        response = self.receive_response()
-        print(response)
+    # def initiate_game(self, player1, player2):
+    #     command = f"GAME_INI {player1} {player2}"
+    #     self.send_message(command)
+    #     response = self.receive_response()
+    #     print(response)
 
     def close_connection(self):
         self.sock.close()

@@ -1,4 +1,3 @@
-Register user must check game log file
-Create database for registered users
+Fix database format for registered users - username
 Exit client sends message for server to log data
-Fix user client register username already in use
+Fix user client register username already in use, should restart to choose another username
