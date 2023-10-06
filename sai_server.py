@@ -21,21 +21,26 @@ class SAI_Server:
     def load_users_from_file(self):
         try:
             with open("database.txt", "r") as file:
-                content = file.read()
-
-                # Empty database JSON format check
-                if content:
-                    self.users = json.loads(content)  # Filling user dictionary
-                else:
-                    print("\n ⚠️  DATABASE FILE IS EMPTY, SHUTTING DOWN\n")
+                for line in file:
+                    if line.strip():  # Check if the line is not empty
+                        user_data = json.loads(line)
+                        username, data = user_data.popitem()
+                        self.users[username] = data  # Filling user dictionary
 
         except FileNotFoundError:
             print("\n ⚠️  DATABASE FILE NOT FOUND, SHUTTING DOWN\n")
 
+        # Empty database JSON format check
+        else:
+            if not self.users:
+                print("\n ⚠️  DATABASE FILE IS EMPTY, SHUTTING DOWN\n")
+
     # Save registered users to database file
     def save_users_to_file(self):
         with open("database.txt", "w") as file:
-            json.dump(self.users, file)
+            for username, user_data in self.users.items():
+                json.dump({username: user_data}, file)
+                file.write("\n")
 
     def start(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:  # Socket object TCP
