@@ -37,7 +37,9 @@ class User_Client:
     def login_user(self, username, password):
         command = f"LOGIN {username} {password}"
         self.send_message(command)
-        response = self.receive_response()
+
+        response = self.receive_response()  # Receive response from server
+        print("")
         print(response)
 
     # def list_users_online(self):
@@ -84,7 +86,6 @@ def main():
             username = input("ENTER YOUR USERNAME: ")
             password = input("ENTER YOUR PASSWORD: ")
             client.register_user(username, password)
-            break
 
         # Login
         elif choice == "2":
@@ -93,7 +94,6 @@ def main():
             username = input("USERNAME: ")
             password = input("PASSWORD: ")
             client.login_user(username, password)
-            break
 
         # Exit client
         elif choice == "3":

@@ -28,12 +28,12 @@ class SAI_Server:
                         self.users[username] = data  # Filling user dictionary
 
         except FileNotFoundError:
-            print("\n ⚠️  DATABASE FILE NOT FOUND, SHUTTING DOWN\n")
+            print("\n ⚠️  DATABASE FILE NOT FOUND\n")
 
         # Empty database JSON format check
         else:
             if not self.users:
-                print("\n ⚠️  DATABASE FILE IS EMPTY, SHUTTING DOWN\n")
+                print("\n ⚠️  DATABASE FILE IS EMPTY\n")
 
     # Save registered users to database file
     def save_users_to_file(self):
@@ -59,17 +59,43 @@ class SAI_Server:
 
     def handle_client(self, conn, addr):
         with conn:
-            print(f"⚡ CONNECTED BY {addr}")
+
+            logged_in_username = None  # Save username for disconnection control
+
+            connection_event = f"⚡ CONNECTED BY {addr}"
+            self.stdout_event(connection_event)
+
             while True:
-                data = conn.recv(1024)  # Client data
-                if not data:
+                try:
+                    data = conn.recv(1024)  # Client data
+
+                    if not data:
+                        # Disconnection using exit command only if user was logged in
+                        if logged_in_username:
+                            disconnect_event = f"🍃 USER DISCONNECTED: {logged_in_username}"
+
+                            # Stdout SAI server event
+                            self.stdout_event(disconnect_event)
+                            # Disconnect event to log file
+                            self.log_event(disconnect_event)
+                        break
+
+                    # Handle commands
+                    message = data.decode("utf-8")
+                    logged_in_username = self.handle_message(
+                        conn, message, logged_in_username)
+
+                # Disconnected handler for connection reset error
+                except ConnectionResetError:
+                    if logged_in_username:
+                        disconnect_event = f"🍃 USER DISCONNECTED: {logged_in_username}"
+
+                        self.stdout_event(disconnect_event)
+                        self.log_event(disconnect_event)
                     break
 
-                message = data.decode("utf-8")
-                self.handle_message(conn, message)
-
     # Communication protocol, commands trigger server-side actions
-    def handle_message(self, conn, message):
+    def handle_message(self, conn, message, logged_in_username):
         parts = message.split()
         command = parts[0]
 
@@ -77,7 +103,11 @@ class SAI_Server:
             self.register_user(conn, parts[1], parts[2])
 
         elif command == "LOGIN":
-            self.login_user(conn, parts[1], parts[2])
+            is_logged_in = self.login_user(conn, parts[1], parts[2])
+
+            if is_logged_in:
+                # Update only if login is successful
+                logged_in_username = parts[1]
 
         # elif command == "LIST-USER-ON-LINE":
         #     self.send_online_users(conn)
@@ -88,12 +118,14 @@ class SAI_Server:
         # elif command == "GAME_INI":
         #     self.initiate_game(conn, parts[1], parts[2])
 
+        return logged_in_username  # Important return for disconnection control
+
     # User registration server response
     def register_user(self, conn, username, password):
 
         # Existing username check
         if username in self.users:
-            response = "🚨 USERNAME ALREADY IN USE PLEASE CHOOSE ANOTHER"
+            response = "🚨 USERNAME ALREADY IN USE PLEASE CHOOSE ANOTHER\n"
 
         else:
             # Add to username dictionary
@@ -102,20 +134,41 @@ class SAI_Server:
             # Event log register
             user_event = f"⭐ REGISTERED NEW USER: {username}"
 
-            print(user_event)  # Stdout SAI server event
-
+            self.stdout_event(user_event)  # Stdout SAI server event
             self.log_event(user_event)  # Save registration event to log file
+
             self.save_users_to_file()   # Save user data to database file
 
-            response = "✅ REGISTRATION SUCCESSFUL"
+            response = "✅ REGISTRATION SUCCESSFUL\n"
 
         # Client response
         conn.send(response.encode("utf-8"))
 
     # User login server response
     def login_user(self, conn, username, password):
-        # Implement user login logic
-        pass
+        # Check username exists in database
+        if username in self.users:
+
+            # Check password match stored password
+            if self.users[username]['password'] == password:
+                response = "✅ LOGIN SUCCESSFUL\n"
+
+                # Event log login
+                user_event = f"📌 USER LOGGED IN: {username}"
+
+                self.stdout_event(user_event)  # Stdout SAI server event
+                self.log_event(user_event)  # Save login event to log file
+
+                conn.send(response.encode("utf-8"))
+                return username
+
+            else:
+                response = "🚨 INVALID PASSWORD\n"
+        else:
+            response = "🚨 USERNAME NOT FOUND\n"
+
+        # Send the response to the client
+        conn.send(response.encode("utf-8"))
 
     # def send_online_users(self, conn):
     #     # Implement logic to send a list of online users to the requesting user
@@ -130,11 +183,16 @@ class SAI_Server:
     #     pass
 
     # Log file event addition
+
     def log_event(self, event):
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         with open(self.log_file, "a", encoding="utf-8") as log:
             log.write(f"{current_time}: {event}\n")
+
+    def stdout_event(self, event):
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"{current_time}: {event}")
 
 
 # Script being executed as main program and being run directly
