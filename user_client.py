@@ -90,9 +90,10 @@ def main():
 
         # User logged in, show play options
         else:
+            print(f"🧿 YOUR LOBBY: {logged_in_username}\n")
             print("[4] LIST USERS ONLINE")
             print("[5] LIST USERS PLAYING")
-            print(f"[6] LOGOUT {logged_in_username}")
+            print("[6] LOGOUT")
 
         choice = input("\n📟 CHOOSE AN OPTION: ")
 
@@ -132,8 +133,9 @@ def main():
 
         # Logout
         elif choice == "6" and logged_in_username:
-            print(f"\n🚀 LOGGING OUT {logged_in_username}")
+            print("\n🚀 LOGGING OUT")
             logged_in_username = None
+            break
 
         # Invalid option
         else:
