@@ -1,4 +1,5 @@
 import socket
+import os
 
 
 class User_Client:
@@ -103,6 +104,9 @@ def main():
 
         # Register user
         if choice == "1" and not logged_in_username:
+            # Clear stdout
+            os.system('cls' if os.name == 'nt' else 'clear')
+
             print("\n📓 USER REGISTRATION")
             username = input("ENTER YOUR USERNAME: ")
             password = input("ENTER YOUR PASSWORD: ")
@@ -110,8 +114,10 @@ def main():
 
         # Login
         elif choice == "2" and not logged_in_username:
-            print("\n🔒 USER LOGIN")
+            # Clear stdout
+            os.system('cls' if os.name == 'nt' else 'clear')
 
+            print("\n🔒 USER LOGIN")
             username = input("USERNAME: ")
             password = input("PASSWORD: ")
 
@@ -120,28 +126,43 @@ def main():
 
         # Exit client
         elif choice == "3" and not logged_in_username:
+            # Clear stdout
+            os.system('cls' if os.name == 'nt' else 'clear')
+
             print("\n🚩 EXITING CLIENT")
             break
 
         # List online users
         elif choice == "4" and logged_in_username:
+            # Clear stdout
+            os.system('cls' if os.name == 'nt' else 'clear')
+
             print("\n🧭 LISTING USERS ONLINE")
             client.list_users_online(logged_in_username)
 
         # Listar usuários jogando
         elif choice == "5" and logged_in_username:
+            # Clear stdout
+            os.system('cls' if os.name == 'nt' else 'clear')
+
             print("\n🎮 LISTING USERS PLAYING")
             # client.list_users_playing()
             pass
 
         # Logout
         elif choice == "6" and logged_in_username:
+            # Clear stdout
+            os.system('cls' if os.name == 'nt' else 'clear')
+
             print("\n🚀 LOGGING OUT")
             logged_in_username = None
             break
 
         # Invalid option
         else:
+            # Clear stdout
+            os.system('cls' if os.name == 'nt' else 'clear')
+
             print("\n⛔ INVALID OPTION, CHOOSE A VALID ONE\n")
 
     client.close_connection()

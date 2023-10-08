@@ -201,7 +201,7 @@ class SAI_Server:
                         if data.get('status') == 'ONLINE' and username != logged_in_username]
 
         if online_users:
-            response = "🤖 ONLINE USERS:\n"
+            response = "🤖 ONLINE USERS:\n\n"
             for user_info in online_users:
                 username, status, ip, port = user_info
                 response += f"👤 {username} | STATUS: {status} | IP: {ip} | PORT: {port}\n"
