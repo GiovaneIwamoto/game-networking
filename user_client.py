@@ -42,6 +42,12 @@ class User_Client:
         print("")
         print(response)
 
+        # If user authenticated return username
+        if response == "✅ LOGIN SUCCESSFUL\n":
+            return username
+        else:
+            return None
+
     # def list_users_online(self):
     #     command = "LIST-USER-ON-LINE"
     #     self.send_message(command)
@@ -70,35 +76,64 @@ def main():
     client = User_Client("127.0.0.1", 4000)
     client.connect()
 
+    logged_in_username = None  # Logged username
+
     print("\n🤠 WELCOME TO TURFMASTERS 🏆 BETTING CHAMPIONS\n")
 
     while True:
-        # User welcome options
-        print("[1] REGISTER")
-        print("[2] LOGIN")
-        print("[3] EXIT CLIENT")
+
+        # User not yet logged in, show welcome options
+        if not logged_in_username:
+            print("[1] REGISTER")
+            print("[2] LOGIN")
+            print("[3] EXIT CLIENT")
+
+        # User logged in, show play options
+        else:
+            print("[4] LIST USERS ONLINE")
+            print("[5] LIST USERS PLAYING")
+            print(f"[6] LOGOUT {logged_in_username}")
 
         choice = input("\n📟 CHOOSE AN OPTION: ")
 
         # Register user
-        if choice == "1":
+        if choice == "1" and not logged_in_username:
             print("\n📓 USER REGISTRATION")
             username = input("ENTER YOUR USERNAME: ")
             password = input("ENTER YOUR PASSWORD: ")
             client.register_user(username, password)
 
         # Login
-        elif choice == "2":
+        elif choice == "2" and not logged_in_username:
             print("\n🔒 USER LOGIN")
 
             username = input("USERNAME: ")
             password = input("PASSWORD: ")
-            client.login_user(username, password)
+
+            # Receives from login method username if logged in or none if failed
+            logged_in_username = client.login_user(username, password)
 
         # Exit client
-        elif choice == "3":
+        elif choice == "3" and not logged_in_username:
             print("\n🚩 EXITING CLIENT")
             break
+
+        # List online users
+        elif choice == "4" and logged_in_username:
+            print("\n👥 LISTING USERS ONLINE")
+            # client.list_users_online()
+            pass
+
+        # Listar usuários jogando
+        elif choice == "5" and logged_in_username:
+            print("\n🎮 LISTING USERS PLAYING")
+            # client.list_users_playing()
+            pass
+
+        # Logout
+        elif choice == "6" and logged_in_username:
+            print(f"\n🚀 LOGGING OUT {logged_in_username}")
+            logged_in_username = None
 
         # Invalid option
         else:
