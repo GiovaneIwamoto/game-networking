@@ -120,8 +120,8 @@ class SAI_Server:
                 # Update only if login is successful
                 logged_in_username = parts[1]
 
-        # elif command == "LIST-USER-ON-LINE":
-        #     self.send_online_users(conn)
+        elif command == "LIST-USERS-ONLINE":
+            self.send_online_users(conn, parts[1])
 
         # elif command == "LIST-USER-PLAYING":
         #     self.send_playing_users(conn)
@@ -186,9 +186,21 @@ class SAI_Server:
         # Send the response to the client
         conn.send(response.encode("utf-8"))
 
-    # def send_online_users(self, conn):
-    #     # Implement logic to send a list of online users to the requesting user
-    #     pass
+    # Users online server response
+    def send_online_users(self, conn, logged_in_username):
+
+        # All users online except current user
+        online_users = [username for username, data in self.users.items() if
+                        data.get('status') == 'ONLINE' and username != logged_in_username]
+
+        if online_users:
+            response = "🤖 ONLINE USERS:\n"
+            for username in online_users:
+                response += f"👤 {username}\n"
+        else:
+            response = "👻 NO USERS ARE CURRENTLY ONLINE\n"
+
+        conn.send(response.encode("utf-8"))
 
     # def send_playing_users(self, conn):
     #     # Implement logic to send a list of users playing to the requesting user

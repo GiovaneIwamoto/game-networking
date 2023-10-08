@@ -34,6 +34,7 @@ class User_Client:
         print("")
         print(response)
 
+    # Send login command
     def login_user(self, username, password):
         command = f"LOGIN {username} {password}"
         self.send_message(command)
@@ -48,11 +49,14 @@ class User_Client:
         else:
             return None
 
-    # def list_users_online(self):
-    #     command = "LIST-USER-ON-LINE"
-    #     self.send_message(command)
-    #     response = self.receive_response()
-    #     print(response)
+    # Send list users online command
+    def list_users_online(self, logged_in_username):
+        command = f"LIST-USERS-ONLINE {logged_in_username}"
+        self.send_message(command)
+
+        response = self.receive_response()
+        print("")
+        print(response)
 
     # def list_users_playing(self):
     #     command = "LIST-USER-PLAYING"
@@ -121,9 +125,8 @@ def main():
 
         # List online users
         elif choice == "4" and logged_in_username:
-            print("\n👥 LISTING USERS ONLINE")
-            # client.list_users_online()
-            pass
+            print("\n🧭 LISTING USERS ONLINE")
+            client.list_users_online(logged_in_username)
 
         # Listar usuários jogando
         elif choice == "5" and logged_in_username:
