@@ -162,7 +162,12 @@ class SAI_Server:
 
             # Check password match stored password
             if self.users[username]['password'] == password:
-                response = "✅ LOGIN SUCCESSFUL\n"
+                # Get client's address info
+                ip, port = conn.getpeername()
+
+                # Update ip and port when logged in, user's last login address
+                self.users[username]['ip'] = ip
+                self.users[username]['port'] = port
 
                 # Update status for online when logged in
                 self.users[username]['status'] = 'ONLINE'
@@ -175,9 +180,10 @@ class SAI_Server:
 
                 self.save_users_to_file()   # Save user data to database file
 
+                response = "✅ LOGIN SUCCESSFUL\n"
                 conn.send(response.encode("utf-8"))
-                return username
 
+                return username
             else:
                 response = "🚨 INVALID PASSWORD\n"
         else:
@@ -190,13 +196,15 @@ class SAI_Server:
     def send_online_users(self, conn, logged_in_username):
 
         # All users online except current user
-        online_users = [username for username, data in self.users.items() if
-                        data.get('status') == 'ONLINE' and username != logged_in_username]
+        online_users = [(username, data.get('status'), data.get('ip'), data.get('port'))
+                        for username, data in self.users.items()
+                        if data.get('status') == 'ONLINE' and username != logged_in_username]
 
         if online_users:
             response = "🤖 ONLINE USERS:\n"
-            for username in online_users:
-                response += f"👤 {username}\n"
+            for user_info in online_users:
+                username, status, ip, port = user_info
+                response += f"👤 {username} | STATUS: {status} | IP: {ip} | PORT: {port}\n"
         else:
             response = "👻 NO USERS ARE CURRENTLY ONLINE\n"
 
