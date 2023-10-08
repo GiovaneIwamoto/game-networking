@@ -1,7 +1,9 @@
-Logged out gamelog
 Set users status
 
 When register, user is OFFLINE status
 When logged in, user is ONLINE status
 When logged out, user is OFFLINE status
 When playing, user is PLAYING
+
+# EXTRA
+if user is online, you can't login again with same username

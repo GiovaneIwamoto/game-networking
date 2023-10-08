@@ -70,7 +70,7 @@ class SAI_Server:
                     data = conn.recv(1024)  # Client data
 
                     if not data:
-                        # Disconnection using exit command only if user was logged in
+                        # Disconnection using logout command only if user was logged in
                         if logged_in_username:
                             disconnect_event = f"🍃 USER DISCONNECTED: {logged_in_username}"
 
@@ -78,6 +78,10 @@ class SAI_Server:
                             self.stdout_event(disconnect_event)
                             # Disconnect event to log file
                             self.log_event(disconnect_event)
+
+                            # Update status for offline when logged out
+                            self.users[logged_in_username]['status'] = 'OFFLINE'
+                            self.save_users_to_file()
                         break
 
                     # Handle commands
@@ -90,8 +94,15 @@ class SAI_Server:
                     if logged_in_username:
                         disconnect_event = f"🍃 USER DISCONNECTED: {logged_in_username}"
 
+                        # Stdout SAI server event
                         self.stdout_event(disconnect_event)
+                        # Disconnect event to log file
                         self.log_event(disconnect_event)
+
+                        # Update status for offline when connection error
+                        self.users[logged_in_username]['status'] = 'OFFLINE'
+                        self.save_users_to_file()
+
                     break
 
     # Communication protocol, commands trigger server-side actions
@@ -129,7 +140,7 @@ class SAI_Server:
 
         else:
             # Add to username dictionary
-            self.users[username] = {'password': password}
+            self.users[username] = {'password': password, 'status': 'OFFLINE'}
 
             # Event log register
             user_event = f"⭐ REGISTERED NEW USER: {username}"
@@ -153,11 +164,16 @@ class SAI_Server:
             if self.users[username]['password'] == password:
                 response = "✅ LOGIN SUCCESSFUL\n"
 
+                # Update status for online when logged in
+                self.users[username]['status'] = 'ONLINE'
+
                 # Event log login
                 user_event = f"📌 USER LOGGED IN: {username}"
 
                 self.stdout_event(user_event)  # Stdout SAI server event
                 self.log_event(user_event)  # Save login event to log file
+
+                self.save_users_to_file()   # Save user data to database file
 
                 conn.send(response.encode("utf-8"))
                 return username
