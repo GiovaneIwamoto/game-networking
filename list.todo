@@ -1,9 +1,5 @@
-Set users status
-
-When register, user is OFFLINE status
-When logged in, user is ONLINE status
-When logged out, user is OFFLINE status
-When playing, user is PLAYING
+When playing user status is PLAYING
+You cannot invite yourself to play game
 
 # EXTRA
 if user is online, you can't login again with same username

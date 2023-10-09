@@ -64,6 +64,7 @@ class User_Client:
     #     response = self.receive_response()
     #     print(response)
 
+    # Send initiate game command
     def initiate_game(self, player1, player2):
         command = f"GAME_INI {player1} {player2}"
         self.send_message(command)
@@ -71,105 +72,108 @@ class User_Client:
         response = self.receive_response()
         print(f"\n{response}")
 
+    # def respond_to_game_invite(self, game_token, response):
+    #     send_response_to_server(game_token, response)
+
+    # Close socket connection
     def close_connection(self):
         self.sock.close()
         print("\n🛑 CONNECTION TO SERVER CLOSED\n")
 
+    def main(self):
+        # Connect user to SAI server
+        self.connect()
 
-def main():
-    # Connect user to SAI server
-    client = User_Client("127.0.0.1", 4000)
-    client.connect()
+        logged_in_username = None  # Logged username
 
-    logged_in_username = None  # Logged username
+        print("\n🤠 WELCOME TO TURFMASTERS 🏆 BETTING CHAMPIONS\n")
 
-    print("\n🤠 WELCOME TO TURFMASTERS 🏆 BETTING CHAMPIONS\n")
+        while True:
 
-    while True:
+            # User not yet logged in, show welcome options
+            if not logged_in_username:
+                print("[1] REGISTER")
+                print("[2] LOGIN")
+                print("[3] EXIT CLIENT")
 
-        # User not yet logged in, show welcome options
-        if not logged_in_username:
-            print("[1] REGISTER")
-            print("[2] LOGIN")
-            print("[3] EXIT CLIENT")
+            # User logged in, show play options
+            else:
+                print(f"🧿 YOUR LOBBY: {logged_in_username}\n")
+                print("[4] LIST USERS ONLINE")
+                print("[5] LIST USERS PLAYING")
+                print("[6] PLAY TURFMASTERS")
+                print("[7] LOGOUT")
 
-        # User logged in, show play options
-        else:
-            print(f"🧿 YOUR LOBBY: {logged_in_username}\n")
-            print("[4] LIST USERS ONLINE")
-            print("[5] LIST USERS PLAYING")
-            print("[6] PLAY TURFMASTERS")
-            print("[7] LOGOUT")
+            choice = input("\n📟 CHOOSE AN OPTION: ")
 
-        choice = input("\n📟 CHOOSE AN OPTION: ")
+            # Register user
+            if choice == "1" and not logged_in_username:
+                os.system('cls' if os.name == 'nt' else 'clear')
 
-        # Register user
-        if choice == "1" and not logged_in_username:
-            os.system('cls' if os.name == 'nt' else 'clear')
+                print("\n📓 USER REGISTRATION")
+                username = input("ENTER YOUR USERNAME: ")
+                password = input("ENTER YOUR PASSWORD: ")
+                client.register_user(username, password)
 
-            print("\n📓 USER REGISTRATION")
-            username = input("ENTER YOUR USERNAME: ")
-            password = input("ENTER YOUR PASSWORD: ")
-            client.register_user(username, password)
+            # Login
+            elif choice == "2" and not logged_in_username:
+                os.system('cls' if os.name == 'nt' else 'clear')
 
-        # Login
-        elif choice == "2" and not logged_in_username:
-            os.system('cls' if os.name == 'nt' else 'clear')
+                print("\n🔒 USER LOGIN")
+                username = input("USERNAME: ")
+                password = input("PASSWORD: ")
 
-            print("\n🔒 USER LOGIN")
-            username = input("USERNAME: ")
-            password = input("PASSWORD: ")
+                # Receives from login method username if logged in or none if failed
+                logged_in_username = client.login_user(username, password)
 
-            # Receives from login method username if logged in or none if failed
-            logged_in_username = client.login_user(username, password)
+            # Exit client
+            elif choice == "3" and not logged_in_username:
+                os.system('cls' if os.name == 'nt' else 'clear')
 
-        # Exit client
-        elif choice == "3" and not logged_in_username:
-            os.system('cls' if os.name == 'nt' else 'clear')
+                print("\n🚩 EXITING CLIENT")
+                break
 
-            print("\n🚩 EXITING CLIENT")
-            break
+            # List online users
+            elif choice == "4" and logged_in_username:
+                os.system('cls' if os.name == 'nt' else 'clear')
 
-        # List online users
-        elif choice == "4" and logged_in_username:
-            os.system('cls' if os.name == 'nt' else 'clear')
+                print("\n🧭 LISTING USERS ONLINE")
+                client.list_users_online(logged_in_username)
 
-            print("\n🧭 LISTING USERS ONLINE")
-            client.list_users_online(logged_in_username)
+            # List playing users
+            elif choice == "5" and logged_in_username:
+                os.system('cls' if os.name == 'nt' else 'clear')
 
-        # List playing users
-        elif choice == "5" and logged_in_username:
-            os.system('cls' if os.name == 'nt' else 'clear')
+                print("\n🎮 LISTING USERS PLAYING")
+                # client.list_users_playing()
+                pass
 
-            print("\n🎮 LISTING USERS PLAYING")
-            # client.list_users_playing()
-            pass
+            # Initiate game
+            elif choice == "6" and logged_in_username:
+                os.system('cls' if os.name == 'nt' else 'clear')
 
-        # Play game
-        elif choice == "6" and logged_in_username:
-            os.system('cls' if os.name == 'nt' else 'clear')
+                print("\n🏹 INITIATE GAME")
 
-            print("\n🏹 INITIATE GAME")
+                adversary_user = input("\n🔍 CHALLENGE THE USER: ")
+                client.initiate_game(logged_in_username, adversary_user)
 
-            adversary_user = input("\n🔍 CHALLENGE THE USER: ")
-            client.initiate_game(logged_in_username, adversary_user)
+            # Logout
+            elif choice == "7" and logged_in_username:
+                os.system('cls' if os.name == 'nt' else 'clear')
 
-        # Logout
-        elif choice == "7" and logged_in_username:
-            os.system('cls' if os.name == 'nt' else 'clear')
+                print("\n🚀 LOGGING OUT")
+                logged_in_username = None
+                break
 
-            print("\n🚀 LOGGING OUT")
-            logged_in_username = None
-            break
+            # Invalid option
+            else:
+                os.system('cls' if os.name == 'nt' else 'clear')
 
-        # Invalid option
-        else:
-            os.system('cls' if os.name == 'nt' else 'clear')
+                print("\n⛔ INVALID OPTION, CHOOSE A VALID ONE\n")
 
-            print("\n⛔ INVALID OPTION, CHOOSE A VALID ONE\n")
-
-    client.close_connection()
+        client.close_connection()
 
 
 if __name__ == "__main__":
-    main()
+    client = User_Client("127.0.0.1", 4000)
+    client.main()

@@ -3,6 +3,8 @@
 import socket
 import threading
 import json
+import time
+import uuid
 from datetime import datetime
 
 
@@ -13,7 +15,8 @@ class SAI_Server:
         self.host = host
         self.port = port
         self.users = {}
-        self.online_users = set()   # Enforce uniqueness
+        self.games = {}
+        self.online_users = {}
         self.log_file = "game.log"  # Log server events
         self.load_users_from_file()  # Load users database
 
@@ -82,6 +85,8 @@ class SAI_Server:
                             # Update status for offline when logged out
                             self.users[logged_in_username]['status'] = 'OFFLINE'
                             self.save_users_to_file()
+
+                            del self.online_users[logged_in_username]
                         break
 
                     # Handle commands
@@ -103,7 +108,21 @@ class SAI_Server:
                         self.users[logged_in_username]['status'] = 'OFFLINE'
                         self.save_users_to_file()
 
+                        del self.online_users[logged_in_username]
                     break
+
+     # Add connection to online user
+    def add_user_connection(self, username, conn):
+        self.online_users[username] = conn
+
+    # Remove connection to offline user
+    def remove_user_connection(self, username):
+        if username in self.online_users:
+            del self.online_users[username]
+
+    # Get connection from user
+    def get_user_connection(self, username):
+        return self.online_users.get(username, None)
 
     # Communication protocol, commands trigger server-side actions
     def handle_message(self, conn, message, logged_in_username):
@@ -126,8 +145,8 @@ class SAI_Server:
         # elif command == "LIST-USER-PLAYING":
         #     self.send_playing_users(conn)
 
-        # elif command == "GAME_INI":
-        #     self.initiate_game(conn, parts[1], parts[2])
+        elif command == "GAME_INI":
+            self.initiate_game(conn, parts[1], parts[2])
 
         return logged_in_username  # Important return for disconnection control
 
@@ -180,6 +199,9 @@ class SAI_Server:
 
                 self.save_users_to_file()   # Save user data to database file
 
+                # Add user's connection
+                self.add_user_connection(username, conn)
+
                 response = "✅ LOGIN SUCCESSFUL\n"
                 conn.send(response.encode("utf-8"))
 
@@ -214,21 +236,97 @@ class SAI_Server:
     #     # Implement logic to send a list of users playing to the requesting user
     #     pass
 
-    # def initiate_game(self, conn, user_a, user_b):
-    #     # Implement logic to initiate a game between two users
-    #     pass
+    # Game initiation server response
+
+    def initiate_game(self, conn, player1, player2):
+
+        # Can not invite yourself for a game
+        if player1 != player2:
+
+            # Check users existence
+            if player1 in self.users and player2 in self.users:
+
+                # Check if user invited is online
+                if self.users[player1]['status'] == 'ONLINE' and self.users[player2]['status'] == 'ONLINE':
+
+                    # Generate unique token for the game
+                    game_token = self.generate_unique_token()
+
+                    # Initiate game notification
+                    response_receiver = f"🔔 {player1} INVITED YOU TO JOIN A GAME\n"
+                    response_sender = f"🔔 INVITED {player2} TO A GAME. WAITING FOR RESPONSE...\n"
+
+                    # Get participants connections
+                    conn_sender = self.get_user_connection(player1)
+                    conn_receiver = self.get_user_connection(player2)
+
+                    # Starting game infos
+                    game_info = {
+                        'token': game_token,
+                        'players': [player1, player2],
+                        'status': 'PENDING',  # can be PENDING or ACCEPTED or DECLINED
+                    }
+
+                    # Store game infos to server
+                    self.games[game_token] = game_info
+
+                    # If connections exists, send notification
+                    if conn_sender:
+                        conn_sender.send(response_sender.encode("utf-8"))
+
+                    if conn_receiver:
+                        conn_receiver.send(response_receiver.encode("utf-8"))
+
+                    # Start thread to wait for invited player's response
+                    threading.Thread(target=self.wait_for_response,
+                                     args=(game_token,)).start()
+
+                    return
+
+        response = "💣 PLAYER NOT FOUND OR OFFLINE\n"
+        conn.send(response.encode("utf-8"))
+
+    # Wait for invited player response
+    def wait_for_response(self, game_token):
+        game_info = self.games[game_token]
+
+        while game_info['status'] == 'PENDING':
+            time.sleep(10)
+
+        return game_info['status']  # Return ACCEPTED or DECLINED
+
+    # Sender's logic to process guest response
+    def process_response(self, game_token, response):
+
+        game_info = self.games[game_token]
+        game_info['status'] = response
+
+        player1, player2 = game_info['players']
+        conn_player1 = self.get_user_connection(player1)
+
+        if response == 'accepted':
+            notification = f"🎮 {player2} ACCEPTED YOUR GAME INVITATION ({game_token}). LET THE GAME BEGIN!\n"
+        else:
+            notification = f"❌ {player2} DECLINED YOUR GAME INVITATION ({game_token}).\n"
+
+        if conn_player1:
+            conn_player1.send(notification.encode("utf-8"))
 
     # Log file event addition
-
     def log_event(self, event):
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         with open(self.log_file, "a", encoding="utf-8") as log:
             log.write(f"{current_time}: {event}\n")
 
+    # Stdout time and event printing
     def stdout_event(self, event):
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print(f"{current_time}: {event}")
+
+    # Generate unique token for game
+    def generate_unique_token(self):
+        return str(uuid.uuid4())
 
 
 # Script being executed as main program and being run directly
