@@ -1,5 +1,3 @@
-When playing user status is PLAYING
-You cannot invite yourself to play game
-
-# EXTRA
-if user is online, you can't login again with same username
+Change users status when playing
+Client notification invite
+Fix timeout afk

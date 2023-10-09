@@ -65,12 +65,31 @@ class User_Client:
     #     print(response)
 
     # Send initiate game command
-    def initiate_game(self, player1, player2):
-        command = f"GAME_INI {player1} {player2}"
+    def initiate_game(self, host, guest):
+        command = f"GAME_INI {host} {guest}"
         self.send_message(command)
 
         response = self.receive_response()
         print(f"\n{response}")
+
+        if "INVITED" in response:
+            print("⏰ WAITING FOR GUEST RESPONSE...\n")
+
+            response_invite = self.receive_response()
+
+            if "ACCEPTED" in response_invite:
+                print(f"🍾 GUEST ACCEPTED GAME INVITATION. STARTING GAME...\n")
+
+                # TODO: Implement logic to start the game here
+
+            elif "DECLINED" in response_invite:
+                print(f"🧹 GAME INVITATION DECLINED BY GUEST\n")
+
+            elif "TIMEOUT" in response_invite:
+                print(f"💤 GUEST SEEMS TO BE AFK\n")
+
+            else:
+                print("❓ UNEXPECTED RESPONSE FROM GUEST\n")
 
     # def respond_to_game_invite(self, game_token, response):
     #     send_response_to_server(game_token, response)

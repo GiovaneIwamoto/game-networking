@@ -178,36 +178,39 @@ class SAI_Server:
     def login_user(self, conn, username, password):
         # Check username exists in database
         if username in self.users:
+            # Check username already logged in
+            if self.users[username]['status'] == 'OFFLINE':
+                # Check password match stored password
+                if self.users[username]['password'] == password:
+                    # Get client's address info
+                    ip, port = conn.getpeername()
 
-            # Check password match stored password
-            if self.users[username]['password'] == password:
-                # Get client's address info
-                ip, port = conn.getpeername()
+                    # Update ip and port when logged in, user's last login address
+                    self.users[username]['ip'] = ip
+                    self.users[username]['port'] = port
 
-                # Update ip and port when logged in, user's last login address
-                self.users[username]['ip'] = ip
-                self.users[username]['port'] = port
+                    # Update status for online when logged in
+                    self.users[username]['status'] = 'ONLINE'
 
-                # Update status for online when logged in
-                self.users[username]['status'] = 'ONLINE'
+                    # Event log login
+                    user_event = f"📌 USER LOGGED IN: {username}"
 
-                # Event log login
-                user_event = f"📌 USER LOGGED IN: {username}"
+                    self.stdout_event(user_event)  # Stdout SAI server event
+                    self.log_event(user_event)  # Save login event to log file
 
-                self.stdout_event(user_event)  # Stdout SAI server event
-                self.log_event(user_event)  # Save login event to log file
+                    self.save_users_to_file()   # Save user data to database file
 
-                self.save_users_to_file()   # Save user data to database file
+                    # Add user's connection
+                    self.add_user_connection(username, conn)
 
-                # Add user's connection
-                self.add_user_connection(username, conn)
+                    response = "✅ LOGIN SUCCESSFUL\n"
+                    conn.send(response.encode("utf-8"))
 
-                response = "✅ LOGIN SUCCESSFUL\n"
-                conn.send(response.encode("utf-8"))
-
-                return username
+                    return username
+                else:
+                    response = "🚨 INVALID PASSWORD\n"
             else:
-                response = "🚨 INVALID PASSWORD\n"
+                response = "🚨 USER ALREADY LOGGED IN\n"
         else:
             response = "🚨 USERNAME NOT FOUND\n"
 
@@ -237,33 +240,32 @@ class SAI_Server:
     #     pass
 
     # Game initiation server response
-
-    def initiate_game(self, conn, player1, player2):
+    def initiate_game(self, conn, host, guest):
 
         # Can not invite yourself for a game
-        if player1 != player2:
+        if host != guest:
 
             # Check users existence
-            if player1 in self.users and player2 in self.users:
+            if host in self.users and guest in self.users:
 
                 # Check if user invited is online
-                if self.users[player1]['status'] == 'ONLINE' and self.users[player2]['status'] == 'ONLINE':
+                if self.users[host]['status'] == 'ONLINE' and self.users[guest]['status'] == 'ONLINE':
 
                     # Generate unique token for the game
                     game_token = self.generate_unique_token()
 
                     # Initiate game notification
-                    response_receiver = f"🔔 {player1} INVITED YOU TO JOIN A GAME\n"
-                    response_sender = f"🔔 INVITED {player2} TO A GAME. WAITING FOR RESPONSE...\n"
+                    response_host = f"🔔 INVITED {guest} TO A GAME\n"
+                    response_guest = f"🔔 {host} INVITED YOU TO JOIN A GAME\n"
 
                     # Get participants connections
-                    conn_sender = self.get_user_connection(player1)
-                    conn_receiver = self.get_user_connection(player2)
+                    conn_host = self.get_user_connection(host)
+                    conn_guest = self.get_user_connection(guest)
 
                     # Starting game infos
                     game_info = {
                         'token': game_token,
-                        'players': [player1, player2],
+                        'players': [host, guest],
                         'status': 'PENDING',  # can be PENDING or ACCEPTED or DECLINED
                     }
 
@@ -271,46 +273,51 @@ class SAI_Server:
                     self.games[game_token] = game_info
 
                     # If connections exists, send notification
-                    if conn_sender:
-                        conn_sender.send(response_sender.encode("utf-8"))
+                    if conn_host:
+                        conn_host.send(response_host.encode("utf-8"))
 
-                    if conn_receiver:
-                        conn_receiver.send(response_receiver.encode("utf-8"))
+                    if conn_guest:
+                        conn_guest.send(response_guest.encode("utf-8"))
 
-                    # Start thread to wait for invited player's response
-                    threading.Thread(target=self.wait_for_response,
-                                     args=(game_token,)).start()
+                    # Wait for guest response
+                    response = conn_guest.recv(1024).decode("utf-8")
 
-                    return
+                    # Invitation accepted by guest
+                    if response == "GAME_ACK":
+                        game_info['status'] = 'ACCEPTED'
+                        # TODO: Game starts here
 
+                        # Send to host user client response command
+                        response_host_accepted = "ACCEPTED"
+
+                        if conn_host:
+                            conn_host.send(
+                                response_host_accepted.encode("utf-8"))
+
+                    # Invitation declined by guest
+                    elif response == "GAME_NEG":
+                        game_info['status'] = 'DECLINED'
+
+                        # Send to host user client response command
+                        response_host_declined = "DECLINED"
+
+                        if conn_host:
+                            conn_host.send(
+                                response_host_declined.encode("utf-8"))
+
+                    # Unexpected response from guest
+                    else:
+                        game_info['status'] = 'DECLINED'
+
+                        # Invitation cancelled by server
+                        response_host_unexpected = "UNEXPECTED RESPONSE"
+                        if conn_host:
+                            conn_host.send(
+                                response_host_unexpected.encode("utf-8"))
+
+        # Guest not found or offline
         response = "💣 PLAYER NOT FOUND OR OFFLINE\n"
         conn.send(response.encode("utf-8"))
-
-    # Wait for invited player response
-    def wait_for_response(self, game_token):
-        game_info = self.games[game_token]
-
-        while game_info['status'] == 'PENDING':
-            time.sleep(10)
-
-        return game_info['status']  # Return ACCEPTED or DECLINED
-
-    # Sender's logic to process guest response
-    def process_response(self, game_token, response):
-
-        game_info = self.games[game_token]
-        game_info['status'] = response
-
-        player1, player2 = game_info['players']
-        conn_player1 = self.get_user_connection(player1)
-
-        if response == 'accepted':
-            notification = f"🎮 {player2} ACCEPTED YOUR GAME INVITATION ({game_token}). LET THE GAME BEGIN!\n"
-        else:
-            notification = f"❌ {player2} DECLINED YOUR GAME INVITATION ({game_token}).\n"
-
-        if conn_player1:
-            conn_player1.send(notification.encode("utf-8"))
 
     # Log file event addition
     def log_event(self, event):
