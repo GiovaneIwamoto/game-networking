@@ -1,3 +1,7 @@
 Change users status when playing
-Client notification invite
+
+Fix client notification invite
 Fix timeout afk
+
+Log in error, incorrect password
+Exit error

@@ -1,3 +1,6 @@
+from queue import Queue
+import threading
+import select
 import socket
 import os
 
@@ -9,6 +12,8 @@ class User_Client:
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.lock = threading.Lock()
+        self.running = True
 
     # Connection to server
     def connect(self):
@@ -91,8 +96,36 @@ class User_Client:
             else:
                 print("❓ UNEXPECTED RESPONSE FROM GUEST\n")
 
-    # def respond_to_game_invite(self, game_token, response):
-    #     send_response_to_server(game_token, response)
+    # Thread to listen for invite notifications
+    def listen_invite_notification(self):
+        while self.running:
+            try:
+                # Lock to ensure that only one thread at a time executes
+                with self.lock:
+
+                    # Check available data for reading at socket
+                    ready_to_read, _, _ = select.select(
+                        [self.sock], [], [], 0.1)
+
+                    if ready_to_read:
+                        response = self.receive_response()
+
+                        if "INVITED YOU TO JOIN A GAME" in response:
+                            print(f"\n📬 NEW NOTIFICATION:\n {response}")
+
+                            print("\n[1] ACCEPT INVITATION")
+                            print("\n[2] DECLINE INVITATION")
+
+                            choice = input("\n📢 CHOOSE AN OPTION: ")
+
+                            if choice == "1":
+                                self.send_message("GAME_ACK")
+                            elif choice == "2":
+                                self.send_message("GAME_NEG")
+
+            except ConnectionError:
+                print("\n🚨 SERVER DISCONNECTED. EXITING CLIENT")
+                break
 
     # Close socket connection
     def close_connection(self):
@@ -100,9 +133,8 @@ class User_Client:
         print("\n🛑 CONNECTION TO SERVER CLOSED\n")
 
     def main(self):
-        # Connect user to SAI server
-        self.connect()
 
+        self.connect()  # Connect user to SAI server
         logged_in_username = None  # Logged username
 
         print("\n🤠 WELCOME TO TURFMASTERS 🏆 BETTING CHAMPIONS\n")
@@ -144,6 +176,12 @@ class User_Client:
 
                 # Receives from login method username if logged in or none if failed
                 logged_in_username = client.login_user(username, password)
+
+                # When authenticated by SAI start thread to listen for invite notifications
+                if logged_in_username:
+                    invite_checker = threading.Thread(
+                        target=self.listen_invite_notification, daemon=True)
+                invite_checker.start()
 
             # Exit client
             elif choice == "3" and not logged_in_username:
@@ -189,6 +227,9 @@ class User_Client:
                 os.system('cls' if os.name == 'nt' else 'clear')
 
                 print("\n⛔ INVALID OPTION, CHOOSE A VALID ONE\n")
+
+        self.running = False  # Sign thread to stop execution
+        invite_checker.join()  # Ensure program doesn't exit before thread finish
 
         client.close_connection()
 
