@@ -130,14 +130,20 @@ class SAI_Server:
         command = parts[0]
 
         if command == "REGISTER":
-            self.register_user(conn, parts[1], parts[2])
+            if len(parts) >= 3:
+                self.register_user(conn, parts[1], parts[2])
+            else:
+                conn.send("🚨 BOTH FIELDS MUST BE FILLED IN\n".encode("utf-8"))
 
         elif command == "LOGIN":
-            is_logged_in = self.login_user(conn, parts[1], parts[2])
+            if len(parts) >= 3:
+                is_logged_in = self.login_user(conn, parts[1], parts[2])
 
-            if is_logged_in:
-                # Update only if login is successful
-                logged_in_username = parts[1]
+                if is_logged_in:
+                    # Update only if login is successful
+                    logged_in_username = parts[1]
+            else:
+                conn.send("🚨 INVALID COMMAND\n".encode("utf-8"))
 
         elif command == "LIST-USERS-ONLINE":
             self.send_online_users(conn, parts[1])
@@ -146,7 +152,10 @@ class SAI_Server:
         #     self.send_playing_users(conn)
 
         elif command == "GAME_INI":
-            self.initiate_game(conn, parts[1], parts[2])
+            if len(parts) >= 3:
+                self.initiate_game(conn, parts[1], parts[2])
+            else:
+                conn.send("🚨 INVALID USER\n".encode("utf-8"))
 
         return logged_in_username  # Important return for disconnection control
 

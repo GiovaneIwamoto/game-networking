@@ -1,10 +1,8 @@
-from queue import Queue
 import threading
 import select
 import socket
 import os
 import time
-import sys
 
 
 class User_Client:
@@ -113,6 +111,7 @@ class User_Client:
                     if ready_to_read:
                         response = self.receive_response()
 
+                        # Show notification at client
                         if "INVITED YOU TO JOIN A GAME" in response:
                             os.system('cls' if os.name == 'nt' else 'clear')
 

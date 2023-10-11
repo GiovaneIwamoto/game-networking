@@ -5,12 +5,7 @@ Fix decline and accept inputs
 
 # STDOUT ERROS
 
-Registration blank (User and Pass and Both)
-Registration with name already in use
-
 Login username not found
 Login username already logged in
 
 Exit client
-
-Play with blank user
