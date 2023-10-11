@@ -133,6 +133,8 @@ class User_Client:
 
         self.connect()  # Connect user to SAI server
         logged_in_username = None  # Logged username
+        invite_checker = threading.Thread(
+            target=self.listen_invite_notification, daemon=True)
 
         print("\n🤠 WELCOME TO TURFMASTERS 🏆 BETTING CHAMPIONS\n")
 
@@ -182,9 +184,7 @@ class User_Client:
 
                 # When authenticated by SAI start thread to listen for invite notifications
                 if logged_in_username:
-                    invite_checker = threading.Thread(
-                        target=self.listen_invite_notification, daemon=True)
-                invite_checker.start()
+                    invite_checker.start()
 
             # Exit client
             elif choice == "3" and not logged_in_username:

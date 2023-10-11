@@ -143,7 +143,7 @@ class SAI_Server:
                     # Update only if login is successful
                     logged_in_username = parts[1]
             else:
-                conn.send("🚨 INVALID COMMAND\n".encode("utf-8"))
+                conn.send("🚨 BOTH FIELDS MUST BE FILLED IN\n".encode("utf-8"))
 
         elif command == "LIST-USERS-ONLINE":
             self.send_online_users(conn, parts[1])
