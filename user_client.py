@@ -247,7 +247,10 @@ class User_Client:
                 print("\n⛔ INVALID OPTION, CHOOSE A VALID ONE\n")
 
         self.running = False  # Sign thread to stop execution
-        invite_checker.join()  # Ensure program doesn't exit before thread finish
+
+        # Ensure program doesn't exit before thread finish
+        if invite_checker.is_alive():
+            invite_checker.join()
 
         client.close_connection()
 

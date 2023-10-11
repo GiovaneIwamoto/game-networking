@@ -1,9 +1,5 @@
 Change users status when playing
 
 Fix timeout afk
-Fix decline and accept inputs
+Fix decline and accept inputs from notification
 Fix simultaneous invitations
-
-# STDOUT ERROS
-
-Exit client
