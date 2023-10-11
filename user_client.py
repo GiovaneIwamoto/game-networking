@@ -3,6 +3,8 @@ import threading
 import select
 import socket
 import os
+import time
+import sys
 
 
 class User_Client:
@@ -14,6 +16,7 @@ class User_Client:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.lock = threading.Lock()
         self.running = True
+        self.notification = False
 
     # Connection to server
     def connect(self):
@@ -111,17 +114,12 @@ class User_Client:
                         response = self.receive_response()
 
                         if "INVITED YOU TO JOIN A GAME" in response:
-                            print(f"\n📬 NEW NOTIFICATION:\n {response}")
+                            os.system('cls' if os.name == 'nt' else 'clear')
 
-                            print("\n[1] ACCEPT INVITATION")
-                            print("\n[2] DECLINE INVITATION")
+                            print(f"📬 NEW NOTIFICATION:\n{response}")
+                            print("PRESS ENTER TO CONTINUE")
 
-                            choice = input("\n📢 CHOOSE AN OPTION: ")
-
-                            if choice == "1":
-                                self.send_message("GAME_ACK")
-                            elif choice == "2":
-                                self.send_message("GAME_NEG")
+                            self.notification = True
 
             except ConnectionError:
                 print("\n🚨 SERVER DISCONNECTED. EXITING CLIENT")
@@ -140,6 +138,12 @@ class User_Client:
         print("\n🤠 WELCOME TO TURFMASTERS 🏆 BETTING CHAMPIONS\n")
 
         while True:
+            # Notifications options
+            if self.notification:
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print(f"📦 SEND BACK ACK:\n")
+                print("[8] ACCEPT INVITATION")
+                print("[9] DECLINE INVITATION")
 
             # User not yet logged in, show welcome options
             if not logged_in_username:
@@ -148,7 +152,7 @@ class User_Client:
                 print("[3] EXIT CLIENT")
 
             # User logged in, show play options
-            else:
+            if logged_in_username and self.notification == False:
                 print(f"🧿 YOUR LOBBY: {logged_in_username}\n")
                 print("[4] LIST USERS ONLINE")
                 print("[5] LIST USERS PLAYING")
@@ -214,7 +218,7 @@ class User_Client:
                 adversary_user = input("\n🔍 CHALLENGE THE USER: ")
                 client.initiate_game(logged_in_username, adversary_user)
 
-            # Logout
+            # Logout from server
             elif choice == "7" and logged_in_username:
                 os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -222,10 +226,25 @@ class User_Client:
                 logged_in_username = None
                 break
 
+            # Game invite accepted
+            elif choice == "8" and logged_in_username:
+                print("\n🟢 ACCEPTING")
+                time.sleep(1)
+                self.send_message("GAME_ACK")
+                self.notification = False
+
+            # Game invite declined
+            elif choice == "9" and logged_in_username:
+                print("\n🔴 DECLINING")
+                time.sleep(1)
+                self.send_message("GAME_NEG")
+                self.notification = False
+
             # Invalid option
             else:
                 os.system('cls' if os.name == 'nt' else 'clear')
 
+                self.send_message("NOTHING")
                 print("\n⛔ INVALID OPTION, CHOOSE A VALID ONE\n")
 
         self.running = False  # Sign thread to stop execution
