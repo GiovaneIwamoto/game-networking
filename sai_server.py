@@ -129,12 +129,14 @@ class SAI_Server:
         parts = message.split()
         command = parts[0]
 
+        # Register user command
         if command == "REGISTER":
             if len(parts) >= 3:
                 self.register_user(conn, parts[1], parts[2])
             else:
                 conn.send("🚨 BOTH FIELDS MUST BE FILLED IN\n".encode("utf-8"))
 
+        # Login user command
         elif command == "LOGIN":
             if len(parts) >= 3:
                 is_logged_in = self.login_user(conn, parts[1], parts[2])
@@ -145,17 +147,23 @@ class SAI_Server:
             else:
                 conn.send("🚨 BOTH FIELDS MUST BE FILLED IN\n".encode("utf-8"))
 
+        # List online users command
         elif command == "LIST-USERS-ONLINE":
             self.send_online_users(conn, parts[1])
 
         # elif command == "LIST-USER-PLAYING":
         #     self.send_playing_users(conn)
 
+        # Game initiation command
         elif command == "GAME_INI":
             if len(parts) >= 3:
                 self.initiate_game(conn, parts[1], parts[2])
             else:
                 conn.send("🚨 INVALID USER\n".encode("utf-8"))
+
+        # Game start command
+        elif command == "GAME_START":
+            self.start_game(conn, parts[1], parts[2])
 
         return logged_in_username  # Important return for disconnection control
 
@@ -294,7 +302,6 @@ class SAI_Server:
                     # Invitation accepted by guest
                     if response == "GAME_ACK":
                         game_info['status'] = 'ACCEPTED'
-                        # TODO: Game starts here
 
                         # Send to host user client response command
                         response_host_accepted = "ACCEPTED"

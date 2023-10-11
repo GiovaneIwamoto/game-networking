@@ -78,24 +78,42 @@ class User_Client:
         response = self.receive_response()
         print(f"\n{response}")
 
+        # Send invite and wait for guest response
         if "INVITED" in response:
             print("⏰ WAITING FOR GUEST RESPONSE...\n")
 
             response_invite = self.receive_response()
 
+            # Accepted, host received GAME_ACK
             if "ACCEPTED" in response_invite:
-                print(f"🍾 GUEST ACCEPTED GAME INVITATION. STARTING GAME...\n")
+                print(f"🍾 GUEST ACCEPTED GAME INVITE. STARTING GAME...\n")
+                time.sleep(1)
 
-                # TODO: Implement logic to start the game here
+                command = f"GAME_START {host} {guest}"
+                self.send_message(command)
+                self.start_game(host, guest)
 
+            # Declined, host receveid GAME_NEG
             elif "DECLINED" in response_invite:
-                print(f"🧹 GAME INVITATION DECLINED BY GUEST\n")
+                print(f"🧹 GAME INVITE DECLINED BY GUEST\n")
 
             elif "TIMEOUT" in response_invite:
                 print(f"💤 GUEST SEEMS TO BE AFK\n")
 
             else:
                 print("❓ UNEXPECTED RESPONSE FROM GUEST\n")
+
+    def start_game(self, host, guest):
+        print("🛡️ GAME STARTED")
+
+        # Establishes direct connection within guest
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as game_socket:
+            game_socket.connect((guest, 5000))  # Game port
+
+            while True:
+                choice = input("").lower()
+                self.send_message(choice)
+                # Game implementation here
 
     # Thread to listen for invite notifications
     def listen_invite_notification(self):
@@ -231,6 +249,13 @@ class User_Client:
                 time.sleep(1)
                 self.send_message("GAME_ACK")
                 self.notification = False
+
+                # TODO: Response recived from server at GAME_START command
+                response_game_start = self.receive_response()
+                if "START_GAME" in response_game_start:
+                    print(f"🍾 HOST STARTING GAME...\n")
+                    # TODO: Who is adversary user
+                    self.start_game(logged_in_username, adversary_user)
 
             # Game invite declined
             elif choice == "9" and logged_in_username:
