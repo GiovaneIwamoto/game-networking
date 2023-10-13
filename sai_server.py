@@ -259,6 +259,7 @@ class SAI_Server:
     # Game initiation server response
     def initiate_game(self, conn, host, guest):
 
+        # HOST means the user who sends the invitation, GUEST means the user who will be invited
         # Can not invite yourself for a game
         if host != guest:
 
@@ -283,7 +284,7 @@ class SAI_Server:
                     game_info = {
                         'token': game_token,
                         'players': [host, guest],
-                        'status': 'PENDING',  # can be PENDING or ACCEPTED or DECLINED
+                        'status': 'PENDING',  # Can be PENDING or ACCEPTED or DECLINED
                     }
 
                     # Store game infos to server
@@ -334,6 +335,10 @@ class SAI_Server:
         # Guest not found or offline
         response = "💣 PLAYER NOT FOUND OR OFFLINE\n"
         conn.send(response.encode("utf-8"))
+
+    # def start_game(self, conn, host, guest):
+        # Implement logic to stdout print and log participants playing
+        # Set users status to playing
 
     # Log file event addition
     def log_event(self, event):

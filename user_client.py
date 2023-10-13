@@ -13,8 +13,9 @@ class User_Client:
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.lock = threading.Lock()
-        self.running = True
-        self.notification = False
+        self.running = True  # Invite listener thread controller
+        self.notification = False  # Active notification controller
+        self.inviter = None  # Store inviter username when user receive a notification
 
     # Connection to server
     def connect(self):
@@ -51,7 +52,7 @@ class User_Client:
         print(f"\n{response}")
 
         # If user authenticated return username
-        if response == "✅ LOGIN SUCCESSFUL\n":
+        if "LOGIN SUCCESSFUL" in response:
             return username
         else:
             return None
@@ -72,6 +73,8 @@ class User_Client:
 
     # Send initiate game command
     def initiate_game(self, host, guest):
+
+        # HOST means the user who sends the invitation, GUEST means the user who will be invited
         command = f"GAME_INI {host} {guest}"
         self.send_message(command)
 
@@ -103,16 +106,19 @@ class User_Client:
             else:
                 print("❓ UNEXPECTED RESPONSE FROM GUEST\n")
 
-    def start_game(self, host, guest):
+    def start_game(self, player_self, player_rival):
         print("🛡️ GAME STARTED")
 
-        # Establishes direct connection within guest
+        # Establishes direct connection within opponent
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as game_socket:
-            game_socket.connect((guest, 5000))  # Game port
+            game_socket.connect((player_rival, 5000))  # Game port
 
             while True:
+                print(f"🎉{player_self} CONNECTED TO {player_rival}\n")
+
                 choice = input("").lower()
                 self.send_message(choice)
+                time.sleep(3)
                 # Game implementation here
 
     # Thread to listen for invite notifications
@@ -135,6 +141,10 @@ class User_Client:
 
                             print(f"📬 NEW NOTIFICATION:\n{response}")
                             print("PRESS ENTER TO CONTINUE")
+
+                            # Save inviter username
+                            parts = response.split()
+                            self.inviter = parts[1]
 
                             self.notification = True
 
@@ -245,22 +255,26 @@ class User_Client:
 
             # Game invite accepted
             elif choice == "8" and logged_in_username:
-                print("\n🟢 ACCEPTING")
+                print("\n🟢 ACCEPTING\n")
                 time.sleep(1)
+
                 self.send_message("GAME_ACK")
                 self.notification = False
 
-                # TODO: Response recived from server at GAME_START command
-                response_game_start = self.receive_response()
-                if "START_GAME" in response_game_start:
-                    print(f"🍾 HOST STARTING GAME...\n")
-                    # TODO: Who is adversary user
-                    self.start_game(logged_in_username, adversary_user)
+                print(f"🍾 YOU ACCEPTED THE INVITATION. STARTING GAME...\n")
+
+                player_self = logged_in_username  # Store self username
+                player_rival = self.inviter  # Store opponent's username
+
+                self.inviter = None  # Set back the inviter's to none
+
+                self.start_game(player_self, player_rival)
 
             # Game invite declined
             elif choice == "9" and logged_in_username:
-                print("\n🔴 DECLINING")
+                print("\n🔴 DECLINING\n")
                 time.sleep(1)
+
                 self.send_message("GAME_NEG")
                 self.notification = False
 
