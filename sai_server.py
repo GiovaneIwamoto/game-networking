@@ -3,7 +3,6 @@
 import socket
 import threading
 import json
-import time
 import uuid
 from datetime import datetime
 
@@ -45,6 +44,17 @@ class SAI_Server:
                 json.dump({username: user_data}, file)
                 file.write("\n")
 
+    # Get user address IP and PORT
+    def get_user_address(self, username):
+        if username in self.users:
+            user_data = self.users[username]
+            ip = user_data.get('ip', 'UNKNOWN')
+            port = user_data.get('port', 'UNKNOWN')
+            return f"{ip}:{port}"
+        else:
+            return 'UNKNOWN'
+
+    # Initiate socket
     def start(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:  # Socket object TCP
             s.bind((self.host, self.port))
@@ -62,7 +72,6 @@ class SAI_Server:
 
     def handle_client(self, conn, addr):
         with conn:
-
             logged_in_username = None  # Save username for disconnection control
 
             connection_event = f"⚡ CONNECTED BY {addr}"
@@ -148,7 +157,7 @@ class SAI_Server:
                 conn.send("🚨 BOTH FIELDS MUST BE FILLED IN\n".encode("utf-8"))
 
         # List online users command
-        elif command == "LIST-USERS-ONLINE":
+        elif command == "LIST_USERS_ONLINE":
             self.send_online_users(conn, parts[1])
 
         # elif command == "LIST-USER-PLAYING":
@@ -164,6 +173,10 @@ class SAI_Server:
         # Game start command
         elif command == "GAME_START":
             self.start_game(conn, parts[1], parts[2])
+
+        # Send to guest connection port command
+        elif command == "SEND_GUEST_CONN_PORT":
+            self.send_guest_conn_port(parts[1], parts[2])
 
         return logged_in_username  # Important return for disconnection control
 
@@ -339,6 +352,15 @@ class SAI_Server:
     # def start_game(self, conn, host, guest):
         # Implement logic to stdout print and log participants playing
         # Set users status to playing
+
+    # Send to guest which port should connect
+    def send_guest_conn_port(self, player_guest, port):
+        # Get guest's address by username
+        conn_guest = self.get_user_connection(player_guest)
+        response_guest = f"CONNECT TO PORT {port}"
+
+        if conn_guest:
+            conn_guest.send(response_guest.encode("utf-8"))
 
     # Log file event addition
     def log_event(self, event):
