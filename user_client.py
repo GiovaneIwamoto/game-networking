@@ -59,7 +59,7 @@ class User_Client:
 
     # Send list users online command
     def list_users_online(self, logged_in_username):
-        command = f"LIST-USERS-ONLINE {logged_in_username}"
+        command = f"LIST_USERS_ONLINE {logged_in_username}"
         self.send_message(command)
 
         response = self.receive_response()
@@ -72,10 +72,10 @@ class User_Client:
     #     print(response)
 
     # Send initiate game command
-    def initiate_game(self, host, guest):
+    def initiate_game(self, player_host, player_guest):
 
         # HOST means the user who sends the invitation, GUEST means the user who will be invited
-        command = f"GAME_INI {host} {guest}"
+        command = f"GAME_INI {player_host} {player_guest}"
         self.send_message(command)
 
         response = self.receive_response()
@@ -89,12 +89,10 @@ class User_Client:
 
             # Accepted, host received GAME_ACK
             if "ACCEPTED" in response_invite:
-                print(f"🍾 GUEST ACCEPTED GAME INVITE. STARTING GAME...\n")
-                time.sleep(1)
+                print(f"🍾 GUEST ACCEPTED GAME INVITE\n")
 
-                command = f"GAME_START {host} {guest}"
-                self.send_message(command)
-                self.start_game(host, guest)
+                # Inviter user start P2P connection when guest accept invite
+                self.start_connection(player_host, player_guest)
 
             # Declined, host receveid GAME_NEG
             elif "DECLINED" in response_invite:
@@ -106,20 +104,41 @@ class User_Client:
             else:
                 print("❓ UNEXPECTED RESPONSE FROM GUEST\n")
 
-    def start_game(self, player_self, player_rival):
-        print("🛡️ GAME STARTED")
+    # Inviter sends socket port to invitee command
+    def start_connection(self, player_host, player_guest):
+        # Host player creates a socket
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as game_socket_host:
 
-        # Establishes direct connection within opponent
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as game_socket:
-            game_socket.connect((player_rival, 5000))  # Game port
+            # Links to an available address
+            game_socket_host.bind((self.host, 0))
+            _, self_port = game_socket_host.getsockname()
+            game_socket_host.listen(1)  # Only one connection
 
-            while True:
-                print(f"🎉{player_self} CONNECTED TO {player_rival}\n")
+            print(
+                f"🔗 WAITING FOR {player_guest} TO CONNECT ON PORT {self_port}\n")
 
-                choice = input("").lower()
-                self.send_message(choice)
-                time.sleep(3)
-                # Game implementation here
+            # Send to SAI server guest's username and which port should connect
+            command = f"SEND_GUEST_CONN_PORT {player_guest} {self_port}"
+            self.send_message(command)
+
+            # Waits until invitee connects to host
+            # Upon connection new socket is created for communication with the guest
+            game_socket_P2P, _ = game_socket_host.accept()
+
+            if game_socket_P2P:
+                print(f"🎉 CONNECTED TO {player_guest}. STARTING GAME...\n")
+
+                while True:
+                    # Host inviter input
+                    move = input(f"🎣 INVITER MOVE {player_host}: ")
+                    game_socket_P2P.send(move.encode('utf-8'))
+
+                    # Wait for opponent's response
+                    response = game_socket_P2P.recv(
+                        1024).decode('utf-8')
+
+                    print(f"\n{player_guest}'s move: {response}\n")
+                    print(f"🍥 ROUND FINISHED")
 
     # Thread to listen for invite notifications
     def listen_invite_notification(self):
@@ -242,8 +261,8 @@ class User_Client:
 
                 print("\n🏹 INITIATE GAME")
 
-                adversary_user = input("\n🔍 CHALLENGE THE USER: ")
-                client.initiate_game(logged_in_username, adversary_user)
+                player_opponent = input("\n🔍 CHALLENGE THE USER: ")
+                client.initiate_game(logged_in_username, player_opponent)
 
             # Logout from server
             elif choice == "7" and logged_in_username:
@@ -258,17 +277,47 @@ class User_Client:
                 print("\n🟢 ACCEPTING\n")
                 time.sleep(1)
 
-                self.send_message("GAME_ACK")
-                self.notification = False
+                self.send_message("GAME_ACK")  # Send SAI game accept
+                self.notification = False   # Remove notification
 
-                print(f"🍾 YOU ACCEPTED THE INVITATION. STARTING GAME...\n")
+                print(f"🍾 YOU ACCEPTED THE INVITATION\n")
 
-                player_self = logged_in_username  # Store self username
-                player_rival = self.inviter  # Store opponent's username
-
+                player_opponent = self.inviter  # Save opponent's namne
                 self.inviter = None  # Set back the inviter's to none
 
-                self.start_game(player_self, player_rival)
+                # Wait for SAI response about which socket to connect to
+                response = self.receive_response()
+
+                if "CONNECT TO PORT" in response:
+                    parts = response.split()
+                    port_host = int(parts[3])  # Get received port
+
+                    # Create socket and connects to received address from SAI
+                    game_socket_guest = socket.socket(
+                        socket.AF_INET, socket.SOCK_STREAM)
+
+                    try:
+                        # Invitee connects to inviter
+                        game_socket_guest.connect((self.host, port_host))
+                        print(
+                            f"🎉 CONNECTED TO {player_opponent}. STARTING GAME...\n")
+
+                        while True:
+                            # Guest invitee input
+                            move = input(
+                                f"🎣 INVITEE MOVE {logged_in_username}: ")
+                            game_socket_guest.send(move.encode('utf-8'))
+
+                            # Wait for opponent's response
+                            response = game_socket_guest.recv(
+                                1024).decode('utf-8')
+
+                            print(f"\n{player_opponent}'s move: {response}\n")
+                            print(f"🍥 ROUND FINISHED")
+
+                    except Exception as e:
+                        print("🚨 FAILED TO CONNECT TO HOST")
+                        game_socket_guest.close()
 
             # Game invite declined
             elif choice == "9" and logged_in_username:

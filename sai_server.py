@@ -353,7 +353,7 @@ class SAI_Server:
         # Implement logic to stdout print and log participants playing
         # Set users status to playing
 
-    # Send to guest which port should connect
+    # Send to guest which port should connect server response
     def send_guest_conn_port(self, player_guest, port):
         # Get guest's address by username
         conn_guest = self.get_user_connection(player_guest)
