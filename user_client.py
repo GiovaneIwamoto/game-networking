@@ -127,18 +127,22 @@ class User_Client:
 
             if game_socket_P2P:
                 print(f"🎉 CONNECTED TO {player_guest}. STARTING GAME...\n")
+                # Connected start game
+                self.start_game(game_socket_P2P, player_host, player_guest)
 
-                while True:
-                    # Host inviter input
-                    move = input(f"🎣 INVITER MOVE {player_host}: ")
-                    game_socket_P2P.send(move.encode('utf-8'))
+    def start_game(self, game_socket_self, player_self, player_opponent):
 
-                    # Wait for opponent's response
-                    response = game_socket_P2P.recv(
-                        1024).decode('utf-8')
+        while True:
+            self_move = input(
+                f"🎣 YOUR MOVE {player_self}: ")
+            game_socket_self.send(self_move.encode('utf-8'))
 
-                    print(f"\n{player_guest}'s move: {response}\n")
-                    print(f"🍥 ROUND FINISHED")
+            # Wait for opponent's response
+            opponent_response = game_socket_self.recv(
+                1024).decode('utf-8')
+
+            print(f"\n{player_opponent}'s move: {opponent_response}\n")
+            print(f"🍥 ROUND FINISHED")
 
     # Thread to listen for invite notifications
     def listen_invite_notification(self):
@@ -302,18 +306,9 @@ class User_Client:
                         print(
                             f"🎉 CONNECTED TO {player_opponent}. STARTING GAME...\n")
 
-                        while True:
-                            # Guest invitee input
-                            move = input(
-                                f"🎣 INVITEE MOVE {logged_in_username}: ")
-                            game_socket_guest.send(move.encode('utf-8'))
-
-                            # Wait for opponent's response
-                            response = game_socket_guest.recv(
-                                1024).decode('utf-8')
-
-                            print(f"\n{player_opponent}'s move: {response}\n")
-                            print(f"🍥 ROUND FINISHED")
+                        # Connected start game
+                        self.start_game(game_socket_guest,
+                                        logged_in_username, player_opponent)
 
                     except Exception as e:
                         print("🚨 FAILED TO CONNECT TO HOST")
