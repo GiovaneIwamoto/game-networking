@@ -1,8 +1,9 @@
 import threading
 import select
 import socket
-import os
+import random
 import time
+import os
 
 
 class User_Client:
@@ -130,19 +131,93 @@ class User_Client:
                 # Connected start game
                 self.start_game(game_socket_P2P, player_host, player_guest)
 
+    # Game logic
     def start_game(self, game_socket_self, player_self, player_opponent):
-
         while True:
-            self_move = input(
-                f"🎣 YOUR MOVE {player_self}: ")
-            game_socket_self.send(self_move.encode('utf-8'))
+            # Score counter
+            score_self = 0
+            score_opponent = 0
 
-            # Wait for opponent's response
-            opponent_response = game_socket_self.recv(
-                1024).decode('utf-8')
+            for round_number in range(1, 6):  # Five rounds
+                print(f"⚔️ ROUND {round_number}\n")
 
-            print(f"\n{player_opponent}'s move: {opponent_response}\n")
-            print(f"🍥 ROUND FINISHED")
+                # Initialize the lake board for each round
+                lake_board = self.initialize_lake_board()
+
+                # Display the lake board
+                # self.display_lake_board(lake_board)
+
+                # Get the player's move
+                move_self = self.get_player_move(lake_board)
+                print(
+                    f"\n🐟 SELF: {player_self} CAUGHT A {move_self} FISH!")
+
+                # Send the fish caught to the opponent
+                game_socket_self.send(move_self.encode('utf-8'))
+
+                # Update self score
+                round_points_self = self.count_points(move_self)
+                score_self += round_points_self
+
+                # Wait for opponent's response
+                move_opponent = game_socket_self.recv(
+                    1024).decode('utf-8')
+
+                # Update opponent score
+                round_points_opponent = self.count_points(move_opponent)
+                score_opponent += round_points_opponent
+
+                print(
+                    f"🦐 OPPONENT: {player_opponent} CAUGHT A {move_opponent} FISH!")
+
+                print(f"\n🍥 ROUND {round_number} FINISHED\n")
+
+    # Initialize a 5x5 lake board with fish types and chances
+    def initialize_lake_board(self):
+        # Bronze 65% - Silver 25% - Gold 10%
+        # Set all initial fish type to bronze
+        lake_board = [["BRONZE"] * 5 for _ in range(5)]
+
+        for row in range(5):
+            for col in range(5):
+                # Generate a random number between 0 and 1
+                chance = random.random()
+                if chance <= 0.35:
+                    lake_board[row][col] = "SILVER"
+
+                elif chance <= 0.1:
+                    lake_board[row][col] = "GOLD"
+
+        return lake_board
+
+    # Get the player's move by row and column
+    def get_player_move(self, lake_board):
+        while True:
+            try:
+                row = int(input(f"🪝  CHOOSE A ROW: ")) - 1
+                col = int(input(f"🪝  CHOOSE A COLUMN: ")) - 1
+
+                if 0 <= row < 5 and 0 <= col < 5:
+                    fish_type = lake_board[row][col]
+                    return fish_type
+                else:
+                    print("\n🐡 INVALID INPUT. CHOOSE A VALID ROW AND COLUMN\n")
+
+            except ValueError:
+                print("\n🐡 INVALID INPUT. ENTER A NUMBER\n")
+
+    # Update scores based on fish type
+    def count_points(self, fish_type):
+        if fish_type == "GOLD":
+            points = 25
+
+        elif fish_type == "SILVER":
+            points = 10
+
+        elif fish_type == "BRONZE":
+            points = 5
+
+        return points
 
     # Thread to listen for invite notifications
     def listen_invite_notification(self):

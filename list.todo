@@ -1,5 +1,8 @@
-Change users status when playing
+Build timeout afk
+Build game implementation logic
 
-Fix timeout afk
+Build change users status when playing "game_start"
+Build list users playing
+
 Fix decline and accept inputs from notification
 Fix simultaneous invitations
