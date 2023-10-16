@@ -349,9 +349,27 @@ class SAI_Server:
         response = "💣 PLAYER NOT FOUND OR OFFLINE\n"
         conn.send(response.encode("utf-8"))
 
-    # def start_game(self, conn, host, guest):
-        # Implement logic to stdout print and log participants playing
-        # Set users status to playing
+    # Change users status to playing
+    def start_game(self, conn, host, guest):
+        # Events
+        playing_event_host = f"🌀 USER IS PLAYING: {host}"
+        playing_event_guest = f"🌀 USER IS PLAYING: {guest}"
+        playing_event_both = f"🔥 USER {host} IS PLAYING AGAINST {guest}"
+
+        # Stdout SAI server event
+        self.stdout_event(playing_event_host)
+        self.stdout_event(playing_event_guest)
+        self.stdout_event(playing_event_both)
+
+        # Playing event to log file
+        self.log_event(playing_event_host)
+        self.log_event(playing_event_guest)
+        self.log_event(playing_event_both)
+
+        # Update status for playing
+        self.users[host]['status'] = 'PLAYING'
+        self.users[guest]['status'] = 'PLAYING'
+        self.save_users_to_file()
 
     # Send to guest which port should connect server response
     def send_guest_conn_port(self, player_guest, port):

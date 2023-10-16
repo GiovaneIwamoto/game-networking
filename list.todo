@@ -1,8 +1,11 @@
 Build timeout afk
 Build game implementation logic
-
-Build change users status when playing "game_start"
+Build game result
+Build invitations while playing
 Build list users playing
+
+Fix when game end set users status back to online
+Fix no users currently online when are users playing
 
 Fix decline and accept inputs from notification
 Fix simultaneous invitations

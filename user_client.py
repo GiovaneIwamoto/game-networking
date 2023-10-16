@@ -127,6 +127,10 @@ class User_Client:
             game_socket_P2P, _ = game_socket_host.accept()
 
             if game_socket_P2P:
+                # Send to SAI game start command
+                command = f"GAME_START {player_host} {player_guest}"
+                self.send_message(command)
+
                 print(f"🎉 CONNECTED TO {player_guest}. STARTING GAME...\n")
                 # Connected start game
                 self.start_game(game_socket_P2P, player_host, player_guest)
