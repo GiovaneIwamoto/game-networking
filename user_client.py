@@ -139,85 +139,146 @@ class User_Client:
             score_opponent = 0
 
             for round_number in range(1, 6):  # Five rounds
-                print(f"⚔️ ROUND {round_number}\n")
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print(f"🦀 ROUND {round_number}: {player_self} VS {player_opponent}\n")
 
-                # Initialize the lake board for each round
-                lake_board = self.initialize_lake_board()
+                print(f"🌞 SELF TOTAL: {score_self} POINTS")
+                print(f"🌚 OPNT TOTAL: {score_opponent} POINTS")
+                
+                # Initialize the ocean board for each round
+                ocean_board = self.initialize_ocean_board()
+                
+                self.display_ocean_empty() # Display empty ocean
 
-                # Display the lake board
-                # self.display_lake_board(lake_board)
+                # Get self player's move
+                move_self = self.get_player_move(ocean_board)
 
-                # Get the player's move
-                move_self = self.get_player_move(lake_board)
-                print(
-                    f"\n🐟 SELF: {player_self} CAUGHT A {move_self} FISH!")
-
-                # Send the fish caught to the opponent
+                # Send the animal type caught to the opponent
                 game_socket_self.send(move_self.encode('utf-8'))
 
                 # Update self score
                 round_points_self = self.count_points(move_self)
                 score_self += round_points_self
 
+                print(f"\n🦗 WAITING FOR {player_opponent} ...\n")
+
                 # Wait for opponent's response
                 move_opponent = game_socket_self.recv(
                     1024).decode('utf-8')
+                
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print(f"🦀 ROUND {round_number}: {player_self} VS {player_opponent}")
 
                 # Update opponent score
                 round_points_opponent = self.count_points(move_opponent)
                 score_opponent += round_points_opponent
+                
+                # Get animal icon
+                icon_self = self.get_animal_icon(move_self)
+                icon_opponent = self.get_animal_icon(move_opponent)
+              
+                # Display the ocean result
+                self.display_ocean_result(ocean_board)
 
                 print(
-                    f"🦐 OPPONENT: {player_opponent} CAUGHT A {move_opponent} FISH!")
+                    f"\n🌞 SELF: {player_self} CAUGHT A {move_self} {icon_self} +{round_points_self}!\n   TOTAL: {score_self} POINTS")
+                print(
+                    f"\n🌚 OPNT: {player_opponent} CAUGHT A {move_opponent} {icon_opponent} +{round_points_opponent}!\n   TOTAL: {score_opponent} POINTS")
 
-                print(f"\n🍥 ROUND {round_number} FINISHED\n")
+                print("\n⌚ NEXT ROUND STARTS IN 10 SECONDS\n")
+                time.sleep(10)
 
-    # Initialize a 5x5 lake board with fish types and chances
-    def initialize_lake_board(self):
-        # Bronze 65% - Silver 25% - Gold 10%
-        # Set all initial fish type to bronze
-        lake_board = [["BRONZE"] * 5 for _ in range(5)]
+    # Initialize a 5x5 ocean board with animals types and chances
+    def initialize_ocean_board(self):
+        ocean_board = [[None] * 5 for _ in range(5)]
 
         for row in range(5):
             for col in range(5):
                 # Generate a random number between 0 and 1
                 chance = random.random()
-                if chance <= 0.35:
-                    lake_board[row][col] = "SILVER"
-
-                elif chance <= 0.1:
-                    lake_board[row][col] = "GOLD"
-
-        return lake_board
+                # Only one of the sea creatures will be selected for each square 
+                if chance <= 0.05: # 5% chance to appear
+                    ocean_board[row][col] = "SHARK"
+                elif chance <= 0.15: # 10% chance to appear
+                    ocean_board[row][col] = "SQUID"
+                elif chance <= 0.35: # 20% chance to appear
+                    ocean_board[row][col] = "LOBSTER"
+                elif chance <= 0.65: # 30% chance to appear
+                    ocean_board[row][col] = "FISH"
+                elif chance <= 1.0: # 35% chance to appear
+                    ocean_board[row][col] = "SHRIMP"
+        return ocean_board
 
     # Get the player's move by row and column
-    def get_player_move(self, lake_board):
+    def get_player_move(self, ocean_board):
         while True:
             try:
                 row = int(input(f"🪝  CHOOSE A ROW: ")) - 1
                 col = int(input(f"🪝  CHOOSE A COLUMN: ")) - 1
 
                 if 0 <= row < 5 and 0 <= col < 5:
-                    fish_type = lake_board[row][col]
-                    return fish_type
+                    animal_type = ocean_board[row][col]
+                    return animal_type
                 else:
-                    print("\n🐡 INVALID INPUT. CHOOSE A VALID ROW AND COLUMN\n")
-
+                    print("\n🚨 INVALID INPUT. CHOOSE A VALID ROW AND COLUMN\n")
             except ValueError:
-                print("\n🐡 INVALID INPUT. ENTER A NUMBER\n")
+                print("\n🚨 INVALID INPUT. ENTER A NUMBER\n")
 
-    # Update scores based on fish type
-    def count_points(self, fish_type):
-        if fish_type == "GOLD":
-            points = 25
-
-        elif fish_type == "SILVER":
-            points = 10
-
-        elif fish_type == "BRONZE":
-            points = 5
-
+    # Update scores based on animal type
+    def count_points(self, animal_type):
+        # 🦈 Shark worth 100 points
+        if animal_type == "SHARK":
+            points = 100
+        # 🦑 Squid worth 80 points
+        elif animal_type == "SQUID":
+            points = 80
+        # 🦞 Lobster worth 60 points
+        elif animal_type == "LOBSTER":
+            points = 60
+        # 🐟 Fish worth 50 points
+        elif animal_type == "FISH":
+            points = 50
+        # 🦐 Shrimp worth 30 points
+        elif animal_type == "SHRIMP":
+            points = 30
         return points
+    
+    # Display the ocean board empty
+    def display_ocean_empty(self):
+        print("\n🦩 CHOOSE A PLACE TO FISH:\n")
+        print("  1  2  3  4  5")
+        for row in range(5):
+            print(f"{row + 1} ", end="")
+            for col in range(5):
+                print("🌊", end=" ")
+            print("")
+        print("")
+
+    # Display the ocean board result
+    def display_ocean_result(self, ocean_board):
+        print("\n🌊 YOUR OCEAN LOOKED LIKE:\n")
+        print("  1  2  3  4  5")
+        for row in range(5):
+            print(f"{row + 1} ", end="")
+            for col in range(5):
+                animal_type = ocean_board[row][col]
+                print(self.get_animal_icon(animal_type), end=" ")
+            print("")
+
+    # Get the animal icon for display
+    def get_animal_icon(self, animal_type):
+        if animal_type == "SHARK":
+            return "🦈"  # Shark icon
+        elif animal_type == "SQUID":
+            return "🦑"  # Squid icon
+        elif animal_type == "LOBSTER":
+            return "🦞"  # Lobster icon
+        elif animal_type == "FISH":
+            return "🐟"  # Fish icon
+        elif animal_type == "SHRIMP":
+            return "🦐"  # Shrimp icon
+        else:
+            return "❓"  # Unknown animal icon
 
     # Thread to listen for invite notifications
     def listen_invite_notification(self):
@@ -225,14 +286,12 @@ class User_Client:
             try:
                 # Lock to ensure that only one thread at a time executes
                 with self.lock:
-
                     # Check available data for reading at socket
                     ready_to_read, _, _ = select.select(
                         [self.sock], [], [], 0.1)
 
                     if ready_to_read:
                         response = self.receive_response()
-
                         # Show notification at client
                         if "INVITED YOU TO JOIN A GAME" in response:
                             os.system('cls' if os.name == 'nt' else 'clear')
@@ -243,9 +302,8 @@ class User_Client:
                             # Save inviter username
                             parts = response.split()
                             self.inviter = parts[1]
-
+                            
                             self.notification = True
-
             except ConnectionError:
                 print("\n🚨 SERVER DISCONNECTED. EXITING CLIENT")
                 break
@@ -256,13 +314,12 @@ class User_Client:
         print("\n🛑 CONNECTION TO SERVER CLOSED\n")
 
     def main(self):
-
         self.connect()  # Connect user to SAI server
         logged_in_username = None  # Logged username
         invite_checker = threading.Thread(
             target=self.listen_invite_notification, daemon=True)
 
-        print("\n🤠 WELCOME TO TURFMASTERS 🏆 BETTING CHAMPIONS\n")
+        print("\n🎏 WELCOME TO FISHERMEN MASTERS\n")
 
         while True:
             # Notifications options
@@ -311,6 +368,9 @@ class User_Client:
                 # When authenticated by SAI start thread to listen for invite notifications
                 if logged_in_username:
                     invite_checker.start()
+
+                    time.sleep(1)                
+                    os.system('cls' if os.name == 'nt' else 'clear')
 
             # Exit client
             elif choice == "3" and not logged_in_username:
