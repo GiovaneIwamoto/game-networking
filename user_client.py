@@ -144,15 +144,16 @@ class User_Client:
 
             for round_number in range(1, 6):  # Five rounds
                 os.system('cls' if os.name == 'nt' else 'clear')
-                print(f"🦀 ROUND {round_number}: {player_self} VS {player_opponent}\n")
+                print(
+                    f"🦀 ROUND {round_number}: {player_self} VS {player_opponent}\n")
 
                 print(f"🌞 SELF TOTAL: {score_self} POINTS")
                 print(f"🌚 OPNT TOTAL: {score_opponent} POINTS")
-                
+
                 # Initialize the ocean board for each round
                 ocean_board = self.initialize_ocean_board()
-                
-                self.display_ocean_empty() # Display empty ocean
+
+                self.display_ocean_empty()  # Display empty ocean
 
                 # Get self player's move
                 move_self = self.get_player_move(ocean_board)
@@ -169,18 +170,19 @@ class User_Client:
                 # Wait for opponent's response
                 move_opponent = game_socket_self.recv(
                     1024).decode('utf-8')
-                
+
                 os.system('cls' if os.name == 'nt' else 'clear')
-                print(f"🦀 ROUND {round_number}: {player_self} VS {player_opponent}")
+                print(
+                    f"🦀 ROUND {round_number}: {player_self} VS {player_opponent}")
 
                 # Update opponent score
                 round_points_opponent = self.count_points(move_opponent)
                 score_opponent += round_points_opponent
-                
+
                 # Get animal icon
                 icon_self = self.get_animal_icon(move_self)
                 icon_opponent = self.get_animal_icon(move_opponent)
-              
+
                 # Display the ocean result
                 self.display_ocean_result(ocean_board)
 
@@ -200,16 +202,16 @@ class User_Client:
             for col in range(5):
                 # Generate a random number between 0 and 1
                 chance = random.random()
-                # Only one of the sea creatures will be selected for each square 
-                if chance <= 0.05: # 5% chance to appear
+                # Only one of the sea creatures will be selected for each square
+                if chance <= 0.05:  # 5% chance to appear
                     ocean_board[row][col] = "SHARK"
-                elif chance <= 0.15: # 10% chance to appear
+                elif chance <= 0.15:  # 10% chance to appear
                     ocean_board[row][col] = "SQUID"
-                elif chance <= 0.35: # 20% chance to appear
+                elif chance <= 0.35:  # 20% chance to appear
                     ocean_board[row][col] = "LOBSTER"
-                elif chance <= 0.65: # 30% chance to appear
+                elif chance <= 0.65:  # 30% chance to appear
                     ocean_board[row][col] = "FISH"
-                elif chance <= 1.0: # 35% chance to appear
+                elif chance <= 1.0:  # 35% chance to appear
                     ocean_board[row][col] = "SHRIMP"
         return ocean_board
 
@@ -246,7 +248,7 @@ class User_Client:
         elif animal_type == "SHRIMP":
             points = 30
         return points
-    
+
     # Display the ocean board empty
     def display_ocean_empty(self):
         print("\n🦩 CHOOSE A PLACE TO FISH:\n")
@@ -306,7 +308,7 @@ class User_Client:
                             # Save inviter username
                             parts = response.split()
                             self.inviter = parts[1]
-                            
+
                             self.notification = True
             except ConnectionError:
                 print("\n🚨 SERVER DISCONNECTED. EXITING CLIENT")
@@ -373,7 +375,7 @@ class User_Client:
                 if logged_in_username:
                     invite_checker.start()
 
-                    time.sleep(1)                
+                    time.sleep(1)
                     os.system('cls' if os.name == 'nt' else 'clear')
 
             # Exit client
