@@ -1,11 +1,8 @@
 Build timeout afk
-Build game implementation logic
 Build game result
 Build invitations while playing
-Build list users playing
 
-Fix when game end set users status back to online
-Fix no users currently online when are users playing
+Log and set user's status back to ONLINE when game finished
 
 Fix decline and accept inputs from notification
 Fix simultaneous invitations

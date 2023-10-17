@@ -16,6 +16,7 @@ class SAI_Server:
         self.users = {}
         self.games = {}
         self.online_users = {}
+        self.playing_users = {}
         self.log_file = "game.log"  # Log server events
         self.load_users_from_file()  # Load users database
 
@@ -160,8 +161,9 @@ class SAI_Server:
         elif command == "LIST_USERS_ONLINE":
             self.send_online_users(conn, parts[1])
 
-        # elif command == "LIST-USER-PLAYING":
-        #     self.send_playing_users(conn)
+        # List playing users command
+        elif command == "LIST_USERS_PLAYING":
+            self.send_playing_users(conn)
 
         # Game initiation command
         elif command == "GAME_INI":
@@ -259,15 +261,35 @@ class SAI_Server:
             response = "🤖 ONLINE USERS:\n\n"
             for user_info in online_users:
                 username, status, ip, port = user_info
-                response += f"👤 {username} | STATUS: {status} | IP: {ip} | PORT: {port}\n"
+                response += f"🟢 👤 {username} | STATUS:{status} | IP: {ip} | PORT: {port}\n"
         else:
             response = "👻 NO USERS ARE CURRENTLY ONLINE\n"
 
         conn.send(response.encode("utf-8"))
 
-    # def send_playing_users(self, conn):
-    #     # Implement logic to send a list of users playing to the requesting user
-    #     pass
+    # Users playing server response
+    def send_playing_users(self, conn):
+        
+        playing_users = [(username, data.get('status'), data.get('ip'), data.get('port'))
+                         for username, data in self.users.items()
+                         if data.get('status') == 'PLAYING']
+
+        if playing_users:
+            response = "🤖 PLAYING USERS:\n\n"
+            
+            # Iterate over pairs of playing users
+            for i in range(0, len(playing_users), 2):
+                user1 = playing_users[i]
+                user2 = playing_users[i + 1] if i + \
+                    1 < len(playing_users) else None
+
+                response += f"🔴 👤 {user1[0]} | {user1[2]}:{user1[3]}"
+                if user2:
+                    response += f" X 👤 {user2[0]} | {user2[2]}:{user2[3]}"
+                response += "\n"
+        else:
+            response = "👻 NO USERS ARE CURRENTLY PLAYING\n"
+        conn.send(response.encode("utf-8"))
 
     # Game initiation server response
     def initiate_game(self, conn, host, guest):
@@ -354,7 +376,7 @@ class SAI_Server:
         # Events
         playing_event_host = f"🌀 USER IS PLAYING: {host}"
         playing_event_guest = f"🌀 USER IS PLAYING: {guest}"
-        playing_event_both = f"🔥 USER {host} IS PLAYING AGAINST {guest}"
+        playing_event_both = f"🔥 USERS IN MATCH: {host} X {guest}"
 
         # Stdout SAI server event
         self.stdout_event(playing_event_host)

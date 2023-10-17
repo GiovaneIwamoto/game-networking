@@ -66,11 +66,12 @@ class User_Client:
         response = self.receive_response()
         print(f"\n{response}")
 
-    # def list_users_playing(self):
-    #     command = "LIST-USER-PLAYING"
-    #     self.send_message(command)
-    #     response = self.receive_response()
-    #     print(response)
+    def list_users_playing(self):
+        command = "LIST_USERS_PLAYING"
+        self.send_message(command)
+
+        response = self.receive_response()
+        print(f"\n{response}")
 
     # Send initiate game command
     def initiate_game(self, player_host, player_guest):
@@ -385,6 +386,10 @@ class User_Client:
                 print("\n🚩 EXITING CLIENT")
                 break
 
+            # Users ONLINE means they are not currently in a game and are available for a match
+            # Users PLAYING means they are connected to an ongoing game but still can be invited to join a new match
+            # Users PLAYING are not considered as ONLINE
+
             # List online users
             elif choice == "4" and logged_in_username:
                 os.system('cls' if os.name == 'nt' else 'clear')
@@ -396,9 +401,8 @@ class User_Client:
             elif choice == "5" and logged_in_username:
                 os.system('cls' if os.name == 'nt' else 'clear')
 
-                print("\n🎮 LISTING USERS PLAYING")
-                # client.list_users_playing()
-                pass
+                print("\n🧭 LISTING USERS PLAYING")
+                client.list_users_playing()
 
             # Initiate game
             elif choice == "6" and logged_in_username:
