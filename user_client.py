@@ -141,6 +141,8 @@ class User_Client:
                 command = f"GAME_OVER {player_host} {player_guest}"
                 self.send_message(command)
 
+                game_socket_P2P.close()  # Close socket
+
     # Game logic
     def start_game(self, game_socket_self, player_self, player_opponent):
         while True:
@@ -155,6 +157,7 @@ class User_Client:
 
                 print(f"🌞 SELF TOTAL: {score_self} POINTS")
                 print(f"🌚 OPNT TOTAL: {score_opponent} POINTS")
+                print(f"\n🏁 TYPE [x] TO SURRENDER")
 
                 # Initialize the ocean board for each round
                 ocean_board = self.initialize_ocean_board()
@@ -163,6 +166,19 @@ class User_Client:
 
                 # Get self player's move
                 move_self = self.get_player_move(ocean_board)
+
+                # Surrender player's move
+                if move_self == "SURRENDER":
+                    os.system('cls' if os.name == 'nt' else 'clear')
+                    game_socket_self.send(move_self.encode('utf-8'))
+
+                    print(
+                        f"💨 SELF: {player_self}, YOU SURRENDERED, LEAVING THE MATCH\n")
+                    print(f"🥈 SORRY, {player_self}. YOU LOST THE GAME!\n")
+
+                    print("⌚ RETURNING TO LOBBY\n")
+                    time.sleep(1)
+                    break
 
                 # Send the animal type caught to the opponent
                 game_socket_self.send(move_self.encode('utf-8'))
@@ -176,6 +192,18 @@ class User_Client:
                 # Wait for opponent's response
                 move_opponent = game_socket_self.recv(
                     1024).decode('utf-8')
+
+                # Surrender opponent's move #TODO: Make this a thread listener
+                if move_opponent == "SURRENDER":
+                    os.system('cls' if os.name == 'nt' else 'clear')
+                    print(
+                        f"💨 OPNT: {player_opponent} HAS SURRENDERED, LEAVING THE MATCH\n")
+                    print(
+                        f"🥇 CONGRATULATIONS, {player_self}! YOU ARE THE WINNER!\n")
+
+                    print("⌚ RETURNING TO LOBBY\n")
+                    time.sleep(1)
+                    break
 
                 os.system('cls' if os.name == 'nt' else 'clear')
                 print(
@@ -198,31 +226,29 @@ class User_Client:
                     f"\n🌚 OPNT: {player_opponent} CAUGHT A {move_opponent} {icon_opponent} +{round_points_opponent}!\n   TOTAL: {score_opponent} POINTS")
 
                 if round_number == 5:
+                    # Show results
                     print("\n⌚ GAME FINISHED! SHOWING RESULTS...\n")
                     time.sleep(5)
+
+                    os.system('cls' if os.name == 'nt' else 'clear')
+
+                    if score_self > score_opponent:
+                        print(
+                            f"\n🥇 CONGRATULATIONS, {player_self}! YOU ARE THE WINNER!")
+
+                    elif score_self < score_opponent:
+                        print(f"\n🥈 SORRY, {player_self}. YOU LOST THE GAME!")
+
+                    else:
+                        print(f"\n🃏 IT'S A TIE! THE GAME ENDS IN A DRAW!")
+
+                    print(f"\n🌞 SELF TOTAL: {score_self} POINTS")
+                    print(f"🌚 OPNT TOTAL: {score_opponent} POINTS")
+                    print("\n⌚ RETURNING TO LOBBY\n")
+
                 else:
                     print("\n⌚ NEXT ROUND STARTS IN 5 SECONDS\n")
                     time.sleep(5)
-
-            # Show results
-            os.system('cls' if os.name == 'nt' else 'clear')
-
-            if score_self > score_opponent:
-                print(
-                    f"\n🥇 CONGRATULATIONS, {player_self}! YOU ARE THE WINNER!")
-
-            elif score_self < score_opponent:
-                print(f"\n🥈 SORRY, {player_self}. YOU LOST THE GAME!")
-
-            else:
-                print(f"\n🃏 IT'S A TIE! THE GAME ENDS IN A DRAW!")
-
-            print(f"\n🌞 SELF TOTAL: {score_self} POINTS")
-            print(f"🌚 OPNT TOTAL: {score_opponent} POINTS")
-
-            print("\n⌚ RETURNING TO LOBBY\n")
-
-            game_socket_self.close()  # Close socket
             break
 
     # Initialize a 5x5 ocean board with animals types and chances
@@ -250,14 +276,24 @@ class User_Client:
     def get_player_move(self, ocean_board):
         while True:
             try:
-                row = int(input(f"🪝  CHOOSE A ROW: ")) - 1
-                col = int(input(f"🪝  CHOOSE A COLUMN: ")) - 1
+                row_input = input(f"🪝  CHOOSE A ROW: ")
+                col_input = input(f"🪝  CHOOSE A COLUMN: ")
 
+                # Surrender comand
+                if row_input.lower() == "x" or col_input.lower() == "x":
+                    return "SURRENDER"
+
+                row = int(row_input) - 1
+                col = int(col_input) - 1
+
+                # Normal coordinate input
                 if 0 <= row < 5 and 0 <= col < 5:
                     animal_type = ocean_board[row][col]
                     return animal_type
+
                 else:
                     print("\n🚨 INVALID INPUT. CHOOSE A VALID ROW AND COLUMN\n")
+
             except ValueError:
                 print("\n🚨 INVALID INPUT. ENTER A NUMBER\n")
 
