@@ -75,9 +75,9 @@ class SAI_Server:
         with conn:
             logged_in_username = None  # Save username for disconnection control
 
-            connection_event = f"⚡ CONNECTED BY {addr}"
-            self.stdout_event(connection_event)
-
+            #connection_event = f"⚡ CONNECTED BY {addr}"
+            #self.stdout_event(connection_event)
+            
             while True:
                 try:
                     data = conn.recv(1024)  # Client data
@@ -180,6 +180,10 @@ class SAI_Server:
         elif command == "SEND_GUEST_CONN_PORT":
             self.send_guest_conn_port(parts[1], parts[2])
 
+        # Game over command
+        elif command == "GAME_OVER":
+            self.game_over(parts[1], parts[2])
+
         return logged_in_username  # Important return for disconnection control
 
     # User registration server response
@@ -276,7 +280,7 @@ class SAI_Server:
 
         if playing_users:
             response = "🤖 PLAYING USERS:\n\n"
-            
+
             # Iterate over pairs of playing users
             for i in range(0, len(playing_users), 2):
                 user1 = playing_users[i]
@@ -374,8 +378,8 @@ class SAI_Server:
     # Change users status to playing
     def start_game(self, conn, host, guest):
         # Events
-        playing_event_host = f"🌀 USER IS PLAYING: {host}"
-        playing_event_guest = f"🌀 USER IS PLAYING: {guest}"
+        playing_event_host = f"🥊 USER IS PLAYING: {host}"
+        playing_event_guest = f"🥊 USER IS PLAYING: {guest}"
         playing_event_both = f"🔥 USERS IN MATCH: {host} X {guest}"
 
         # Stdout SAI server event
@@ -401,6 +405,25 @@ class SAI_Server:
 
         if conn_guest:
             conn_guest.send(response_guest.encode("utf-8"))
+
+    # Set back users status to online 
+    def game_over(self, player_host, player_guest):
+        # Inactive means user is no longer in a game and is now available
+        inactive_event_host = f"🌀 USER BECAME INACTIVE: {player_host}"
+        inactive_event_guest = f"🌀 USER BECAME INACTIVE: {player_guest}"
+
+        # Stdout SAI server event
+        self.stdout_event(inactive_event_host)
+        self.stdout_event(inactive_event_guest)
+
+        # Playing event to log file
+        self.log_event(inactive_event_host)
+        self.log_event(inactive_event_guest)
+
+        # Update status for online
+        self.users[player_host]['status'] = 'ONLINE'
+        self.users[player_guest]['status'] = 'ONLINE'
+        self.save_users_to_file()
 
     # Log file event addition
     def log_event(self, event):

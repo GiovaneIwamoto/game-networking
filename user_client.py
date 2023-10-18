@@ -137,6 +137,10 @@ class User_Client:
                 # Connected start game
                 self.start_game(game_socket_P2P, player_host, player_guest)
 
+                # Only host is responsible for sending game over command to SAI when both finished match
+                command = f"GAME_OVER {player_host} {player_guest}"
+                self.send_message(command)
+
     # Game logic
     def start_game(self, game_socket_self, player_self, player_opponent):
         while True:
@@ -144,7 +148,7 @@ class User_Client:
             score_self = 0
             score_opponent = 0
 
-            for round_number in range(1, 3):  # Five rounds
+            for round_number in range(1, 5):  # Five rounds
                 os.system('cls' if os.name == 'nt' else 'clear')
                 print(
                     f"🦀 ROUND {round_number}: {player_self} VS {player_opponent}\n")
@@ -193,30 +197,30 @@ class User_Client:
                 print(
                     f"\n🌚 OPNT: {player_opponent} CAUGHT A {move_opponent} {icon_opponent} +{round_points_opponent}!\n   TOTAL: {score_opponent} POINTS")
 
-                if round_number != "3":
-                    print("\n⌚ NEXT ROUND STARTS IN 5 SECONDS\n")
-                    time.sleep(5)
+                if round_number != "5": #TODO: Fix round number and in range
+                    print("\n⌚ NEXT ROUND STARTS IN 10 SECONDS\n")
+                    time.sleep(10)
                 else:
                     print("\n⌚ GAME FINISHED! SHOWING RESULTS...\n")
                     time.sleep(5)
 
             # Show results
+            os.system('cls' if os.name == 'nt' else 'clear')
+
             if score_self > score_opponent:
-                print(f"\nCONGRATULATIONS, {player_self}! YOU ARE THE WINNER!")
-            
+                print(f"\n🥇 CONGRATULATIONS, {player_self}! YOU ARE THE WINNER!")
             elif score_self < score_opponent:
-                print(f"\nSORRY, {player_self}. YOU LOST THE GAME!")
-            
+                print(f"\n🥈 SORRY, {player_self}. YOU LOST THE GAME!")
             else:
-                print("\nIT'S A TIE! THE GAME ENDS IN A DRAW!")
+                print(f"\n🃏 IT'S A TIE! THE GAME ENDS IN A DRAW!")
 
             print(f"\n🌞 SELF: {player_self} TOTAL: {score_self} POINTS")
-            print(f"🌚 OPNT: {player_opponent} TOTAL: {score_opponent} POINTS\n")
-
+            print(f"🌚 OPNT: {player_opponent} TOTAL: {score_opponent} POINTS")
+            
+            print("\n⌚ RETURNING TO LOBBY\n")
+            
+            game_socket_self.close() # Close socket
             break
-
-            # command = f"GAME_OVER {player_self} {player_opponent}"
-            # self.send_message(command)
 
     # Initialize a 5x5 ocean board with animals types and chances
     def initialize_ocean_board(self):
@@ -370,7 +374,7 @@ class User_Client:
                 print(f"🧿 YOUR LOBBY: {logged_in_username}\n")
                 print("[4] LIST USERS ONLINE")
                 print("[5] LIST USERS PLAYING")
-                print("[6] PLAY TURFMASTERS")
+                print("[6] PLAY FISHERMEN MASTERS")
                 print("[7] LOGOUT")
 
             choice = input("\n📟 CHOOSE AN OPTION: ")
@@ -477,6 +481,8 @@ class User_Client:
                         # Connected start game
                         self.start_game(game_socket_guest,
                                         logged_in_username, player_opponent)
+                        
+                        game_socket_guest.close() # Close socket
 
                     except Exception as e:
                         print("🚨 FAILED TO CONNECT TO HOST")
