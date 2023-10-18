@@ -261,7 +261,7 @@ class SAI_Server:
             response = "🤖 ONLINE USERS:\n\n"
             for user_info in online_users:
                 username, status, ip, port = user_info
-                response += f"🟢 👤 {username} | STATUS:{status} | IP: {ip} | PORT: {port}\n"
+                response += f"🟢 👤 {username} | STATUS: {status} | IP: {ip} | PORT: {port}\n"
         else:
             response = "👻 NO USERS ARE CURRENTLY ONLINE\n"
 
@@ -269,7 +269,7 @@ class SAI_Server:
 
     # Users playing server response
     def send_playing_users(self, conn):
-        
+
         playing_users = [(username, data.get('status'), data.get('ip'), data.get('port'))
                          for username, data in self.users.items()
                          if data.get('status') == 'PLAYING']

@@ -1,8 +1,8 @@
-Build timeout afk
-Build game result
+Build timeout afk - user sleep
 Build invitations while playing
 
 Log and set user's status back to ONLINE when game finished
 
 Fix decline and accept inputs from notification
 Fix simultaneous invitations
+Fix log address IP and PORT

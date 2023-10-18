@@ -98,6 +98,7 @@ class User_Client:
 
             # Declined, host receveid GAME_NEG
             elif "DECLINED" in response_invite:
+                os.system('cls' if os.name == 'nt' else 'clear')
                 print(f"🧹 GAME INVITE DECLINED BY GUEST\n")
 
             elif "TIMEOUT" in response_invite:
@@ -143,7 +144,7 @@ class User_Client:
             score_self = 0
             score_opponent = 0
 
-            for round_number in range(1, 6):  # Five rounds
+            for round_number in range(1, 3):  # Five rounds
                 os.system('cls' if os.name == 'nt' else 'clear')
                 print(
                     f"🦀 ROUND {round_number}: {player_self} VS {player_opponent}\n")
@@ -192,8 +193,30 @@ class User_Client:
                 print(
                     f"\n🌚 OPNT: {player_opponent} CAUGHT A {move_opponent} {icon_opponent} +{round_points_opponent}!\n   TOTAL: {score_opponent} POINTS")
 
-                print("\n⌚ NEXT ROUND STARTS IN 10 SECONDS\n")
-                time.sleep(10)
+                if round_number != "3":
+                    print("\n⌚ NEXT ROUND STARTS IN 5 SECONDS\n")
+                    time.sleep(5)
+                else:
+                    print("\n⌚ GAME FINISHED! SHOWING RESULTS...\n")
+                    time.sleep(5)
+
+            # Show results
+            if score_self > score_opponent:
+                print(f"\nCONGRATULATIONS, {player_self}! YOU ARE THE WINNER!")
+            
+            elif score_self < score_opponent:
+                print(f"\nSORRY, {player_self}. YOU LOST THE GAME!")
+            
+            else:
+                print("\nIT'S A TIE! THE GAME ENDS IN A DRAW!")
+
+            print(f"\n🌞 SELF: {player_self} TOTAL: {score_self} POINTS")
+            print(f"🌚 OPNT: {player_opponent} TOTAL: {score_opponent} POINTS\n")
+
+            break
+
+            # command = f"GAME_OVER {player_self} {player_opponent}"
+            # self.send_message(command)
 
     # Initialize a 5x5 ocean board with animals types and chances
     def initialize_ocean_board(self):
@@ -464,6 +487,7 @@ class User_Client:
                 print("\n🔴 DECLINING\n")
                 time.sleep(1)
 
+                os.system('cls' if os.name == 'nt' else 'clear')
                 self.send_message("GAME_NEG")
                 self.notification = False
 
