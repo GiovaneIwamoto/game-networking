@@ -174,7 +174,7 @@ class User_Client:
 
                     print(
                         f"💨 SELF: {player_self}, YOU SURRENDERED, LEAVING THE MATCH\n")
-                    print(f"🥈 SORRY, {player_self}. YOU LOST THE GAME!\n")
+                    print(f"🥈 SORRY, {player_self}! YOU LOST THE GAME!\n")
 
                     print("⌚ RETURNING TO LOBBY\n")
                     time.sleep(1)
@@ -193,11 +193,11 @@ class User_Client:
                 move_opponent = game_socket_self.recv(
                     1024).decode('utf-8')
 
-                # Surrender opponent's move #TODO: Make this a thread listener
+                # TODO: Make this a thread listener
                 if move_opponent == "SURRENDER":
                     os.system('cls' if os.name == 'nt' else 'clear')
                     print(
-                        f"💨 OPNT: {player_opponent} HAS SURRENDERED, LEAVING THE MATCH\n")
+                        f"💨 OPNT: {player_opponent} HAS LEFT THE GAME, LEAVING MATCH\n")
                     print(
                         f"🥇 CONGRATULATIONS, {player_self}! YOU ARE THE WINNER!\n")
 
@@ -237,7 +237,7 @@ class User_Client:
                             f"\n🥇 CONGRATULATIONS, {player_self}! YOU ARE THE WINNER!")
 
                     elif score_self < score_opponent:
-                        print(f"\n🥈 SORRY, {player_self}. YOU LOST THE GAME!")
+                        print(f"\n🥈 SORRY, {player_self}! YOU LOST THE GAME!")
 
                     else:
                         print(f"\n🃏 IT'S A TIE! THE GAME ENDS IN A DRAW!")
@@ -276,11 +276,13 @@ class User_Client:
     def get_player_move(self, ocean_board):
         while True:
             try:
-                row_input = input(f"🪝  CHOOSE A ROW: ")
-                col_input = input(f"🪝  CHOOSE A COLUMN: ")
-
                 # Surrender comand
-                if row_input.lower() == "x" or col_input.lower() == "x":
+                row_input = input(f"🪝  CHOOSE A ROW: ")
+                if row_input.lower() == "x":
+                    return "SURRENDER"
+
+                col_input = input(f"🪝  CHOOSE A COLUMN: ")
+                if col_input.lower() == "x":
                     return "SURRENDER"
 
                 row = int(row_input) - 1
