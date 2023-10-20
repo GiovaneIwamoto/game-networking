@@ -4,3 +4,5 @@ Build surrender
 
 Fix decline and accept inputs from notification
 Fix simultaneous invitations
+
+Fix both users send leave command

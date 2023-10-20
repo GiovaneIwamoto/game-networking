@@ -75,9 +75,9 @@ class SAI_Server:
         with conn:
             logged_in_username = None  # Save username for disconnection control
 
-            #connection_event = f"⚡ CONNECTED BY {addr}"
-            #self.stdout_event(connection_event)
-            
+            # connection_event = f"⚡ CONNECTED BY {addr}"
+            # self.stdout_event(connection_event)
+
             while True:
                 try:
                     data = conn.recv(1024)  # Client data
@@ -182,7 +182,11 @@ class SAI_Server:
 
         # Game over command
         elif command == "GAME_OVER":
-            self.game_over(parts[1], parts[2])
+            self.game_over(parts[1])
+
+        # Opponent left command
+        elif command == "OPNT_LEFT":
+            self.opponent_left(parts[1], parts[2])
 
         return logged_in_username  # Important return for disconnection control
 
@@ -406,24 +410,30 @@ class SAI_Server:
         if conn_guest:
             conn_guest.send(response_guest.encode("utf-8"))
 
-    # Set back users status to online 
-    def game_over(self, player_host, player_guest):
+    # Set back user status to online
+    def game_over(self, player_self):
         # Inactive means user is no longer in a game and is now available
-        inactive_event_host = f"🌀 USER BECAME INACTIVE: {player_host}"
-        inactive_event_guest = f"🌀 USER BECAME INACTIVE: {player_guest}"
+        inactive_event_self = f"🌀 USER BECAME INACTIVE: {player_self}"
 
         # Stdout SAI server event
-        self.stdout_event(inactive_event_host)
-        self.stdout_event(inactive_event_guest)
+        self.stdout_event(inactive_event_self)
 
-        # Playing event to log file
-        self.log_event(inactive_event_host)
-        self.log_event(inactive_event_guest)
+        # Inactive event to log file
+        self.log_event(inactive_event_self)
 
         # Update status for online
-        self.users[player_host]['status'] = 'ONLINE'
-        self.users[player_guest]['status'] = 'ONLINE'
+        self.users[player_self]['status'] = 'ONLINE'
         self.save_users_to_file()
+
+    # Detected opponent left match. Set opponent's status back
+    def opponent_left(self, player_self, player_opponent):
+        left_event_opponent = f"💨 USER LEFT MATCH: {player_opponent} AGAINST: {player_self}"
+
+        # Stdout SAI server event
+        self.stdout_event(left_event_opponent)
+
+        # Left event to log file
+        self.log_event(left_event_opponent)
 
     # Log file event addition
     def log_event(self, event):

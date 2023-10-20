@@ -134,14 +134,40 @@ class User_Client:
                 self.send_message(command)
 
                 print(f"🎉 CONNECTED TO {player_guest}. STARTING GAME...\n")
-                # Connected start game
-                self.start_game(game_socket_P2P, player_host, player_guest)
 
-                # Only host is responsible for sending game over command to SAI when both finished match
-                command = f"GAME_OVER {player_host} {player_guest}"
-                self.send_message(command)
+                try:
+                    # Connected start game
+                    self.start_game(game_socket_P2P, player_host, player_guest)
 
-                game_socket_P2P.close()  # Close socket
+                    # Host after match ends send to SAI game over command to set back status to online
+                    command = f"GAME_OVER {player_host}"
+                    self.send_message(command)
+
+                    game_socket_P2P.close()  # Close socket
+
+                # Host view, guest had lost connection or left game
+                except Exception as e:
+                    print("🚨 FAILED TO CONNECT TO GUEST/n")
+
+                    # Host after match ends send to SAI game over command to set back status to online
+                    command = f"GAME_OVER {player_host}"
+                    self.send_message(command)
+
+                    # Guest detected that opponent has left the match
+                    # command = f"OPNT_LEFT {logged_in_username} {player_opponent}"
+                    # self.send_message(command)
+
+                    # Show host win message
+                    os.system('cls' if os.name == 'nt' else 'clear')
+                    print(
+                        f"💨 OPNT: {player_guest} HAS LEFT THE GAME, LEAVING MATCH\n")
+                    print(
+                        f"🥇 CONGRATULATIONS, {player_host}! YOU ARE THE WINNER!\n")
+
+                    print("⌚ RETURNING TO LOBBY\n")
+                    time.sleep(1)
+
+                    game_socket_P2P.close()
 
     # Game logic
     def start_game(self, game_socket_self, player_self, player_opponent):
@@ -157,7 +183,7 @@ class User_Client:
 
                 print(f"🌞 SELF TOTAL: {score_self} POINTS")
                 print(f"🌚 OPNT TOTAL: {score_opponent} POINTS")
-                print(f"\n🏁 TYPE [x] TO SURRENDER")
+                print(f"\n🏁 TYPE [x] TO LEAVE MATCH")
 
                 # Initialize the ocean board for each round
                 ocean_board = self.initialize_ocean_board()
@@ -167,13 +193,13 @@ class User_Client:
                 # Get self player's move
                 move_self = self.get_player_move(ocean_board)
 
-                # Surrender player's move
-                if move_self == "SURRENDER":
+                # Leave player's move
+                if move_self == "LEAVE":
                     os.system('cls' if os.name == 'nt' else 'clear')
                     game_socket_self.send(move_self.encode('utf-8'))
 
                     print(
-                        f"💨 SELF: {player_self}, YOU SURRENDERED, LEAVING THE MATCH\n")
+                        f"💨 SELF: {player_self}, YOU LEFT THE MATCH\n")
                     print(f"🥈 SORRY, {player_self}! YOU LOST THE GAME!\n")
 
                     print("⌚ RETURNING TO LOBBY\n")
@@ -193,8 +219,8 @@ class User_Client:
                 move_opponent = game_socket_self.recv(
                     1024).decode('utf-8')
 
-                # TODO: Make this a thread listener
-                if move_opponent == "SURRENDER":
+                # Self waiting for opponent's response but received left command from opponent
+                if move_opponent == "LEAVE":
                     os.system('cls' if os.name == 'nt' else 'clear')
                     print(
                         f"💨 OPNT: {player_opponent} HAS LEFT THE GAME, LEAVING MATCH\n")
@@ -276,14 +302,14 @@ class User_Client:
     def get_player_move(self, ocean_board):
         while True:
             try:
-                # Surrender comand
+                # Leave comand
                 row_input = input(f"🪝  CHOOSE A ROW: ")
                 if row_input.lower() == "x":
-                    return "SURRENDER"
+                    return "LEAVE"
 
                 col_input = input(f"🪝  CHOOSE A COLUMN: ")
                 if col_input.lower() == "x":
-                    return "SURRENDER"
+                    return "LEAVE"
 
                 row = int(row_input) - 1
                 col = int(col_input) - 1
@@ -523,10 +549,34 @@ class User_Client:
                         self.start_game(game_socket_guest,
                                         logged_in_username, player_opponent)
 
+                        # Guest after match ends send to SAI game over command to set back status to online
+                        command = f"GAME_OVER {logged_in_username}"
+                        self.send_message(command)
+
                         game_socket_guest.close()  # Close socket
 
+                    # Guest view, host had lost connection or left game
                     except Exception as e:
-                        print("🚨 FAILED TO CONNECT TO HOST")
+                        print("🚨 FAILED TO CONNECT TO HOST/n")
+
+                        # Guest after match ends send to SAI game over command to set back status to online
+                        command = f"GAME_OVER {logged_in_username}"
+                        self.send_message(command)
+
+                        # Guest detected that opponent has left the match
+                        # command = f"OPNT_LEFT {logged_in_username} {player_opponent}"
+                        # self.send_message(command)
+
+                        # Show guest win message
+                        os.system('cls' if os.name == 'nt' else 'clear')
+                        print(
+                            f"💨 OPNT: {player_opponent} HAS LEFT THE GAME, LEAVING MATCH\n")
+                        print(
+                            f"🥇 CONGRATULATIONS, {logged_in_username}! YOU ARE THE WINNER!\n")
+
+                        print("⌚ RETURNING TO LOBBY\n")
+                        time.sleep(1)
+
                         game_socket_guest.close()
 
             # Game invite declined
