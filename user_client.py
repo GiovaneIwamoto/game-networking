@@ -16,6 +16,7 @@ class User_Client:
         self.lock = threading.Lock()
         self.running = True  # Invite listener thread controller
         self.notification = False  # Active notification controller
+        self.input_ack_neg = False  # Controller for accept or decline notification at input
         self.inviter = None  # Store inviter username when user receive a notification
 
     # Connection to server
@@ -425,6 +426,8 @@ class User_Client:
         while True:
             # Notifications options
             if self.notification:
+                # Only case ack or neg can be a valid option at input
+                self.input_ack_neg = True
                 os.system('cls' if os.name == 'nt' else 'clear')
                 print(f"📦 SEND BACK ACK:\n")
                 print("[8] ACCEPT INVITATION")
@@ -516,12 +519,13 @@ class User_Client:
                 break
 
             # Game invite accepted
-            elif choice == "8" and logged_in_username:
+            elif choice == "8" and logged_in_username and self.notification == True and self.input_ack_neg == True:
                 print("\n🟢 ACCEPTING\n")
                 time.sleep(1)
 
                 self.send_message("GAME_ACK")  # Send SAI game accept
                 self.notification = False   # Remove notification
+                self.input_ack_neg = False  # Remove ack and neg as valid option at input
 
                 print(f"🍾 YOU ACCEPTED THE INVITATION\n")
 
@@ -580,13 +584,14 @@ class User_Client:
                         game_socket_guest.close()
 
             # Game invite declined
-            elif choice == "9" and logged_in_username:
+            elif choice == "9" and logged_in_username and self.notification == True and self.input_ack_neg == True:
                 print("\n🔴 DECLINING\n")
                 time.sleep(1)
-
                 os.system('cls' if os.name == 'nt' else 'clear')
+
                 self.send_message("GAME_NEG")
-                self.notification = False
+                self.notification = False  # Remove notification
+                self.input_ack_neg = False  # Remove ack and neg as valid option at input
 
             # Invalid option
             else:
