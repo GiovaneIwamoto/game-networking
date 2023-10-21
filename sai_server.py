@@ -310,7 +310,7 @@ class SAI_Server:
             if host in self.users and guest in self.users:
 
                 # Check if user invited is online
-                if self.users[host]['status'] == 'ONLINE' and self.users[guest]['status'] == 'ONLINE':
+                if self.users[host]['status'] == 'ONLINE' and self.users[guest]['status'] in ('ONLINE', 'PLAYING',):
 
                     # Generate unique token for the game
                     game_token = self.generate_unique_token()

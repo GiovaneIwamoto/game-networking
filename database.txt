@@ -1,0 +1,3 @@
+{"mino": {"password": "mino", "status": "OFFLINE", "ip": "127.0.0.1", "port": 51729}}
+{"mana": {"password": "mana", "status": "OFFLINE", "ip": "127.0.0.1", "port": 51731}}
+{"ana": {"password": "ana", "status": "OFFLINE", "ip": "127.0.0.1", "port": 51737}}

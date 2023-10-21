@@ -6,6 +6,13 @@ import time
 import os
 
 
+def regressive_counter(count):
+    for i in range(count, -1, -1):  # regressive count count down 0
+        print(f"Time Left: {i}", end="\r")
+        time.sleep(1)
+    print(" " * 15, end="\r")
+
+
 class User_Client:
 
     # Constructor method, creates socket
@@ -18,6 +25,9 @@ class User_Client:
         self.notification = False  # Active notification controller
         self.input_ack_neg = False  # Controller for accept or decline notification at input
         self.inviter = None  # Store inviter username when user receive a notification
+        self.choice = None  # Store inviter last choice
+
+        self.invite_semaphore = threading.Semaphore(2)
 
     # Connection to server
     def connect(self):
@@ -388,24 +398,25 @@ class User_Client:
             try:
                 # Lock to ensure that only one thread at a time executes
                 with self.lock:
-                    # Check available data for reading at socket
-                    ready_to_read, _, _ = select.select(
-                        [self.sock], [], [], 0.1)
+                    with self.invite_semaphore:
+                        # Check available data for reading at socket
+                        ready_to_read, _, _ = select.select(
+                            [self.sock], [], [], 0.1)
 
-                    if ready_to_read:
-                        response = self.receive_response()
-                        # Show notification at client
-                        if "INVITED YOU TO JOIN A GAME" in response:
-                            os.system('cls' if os.name == 'nt' else 'clear')
+                        if ready_to_read:
+                            response = self.receive_response()
+                            # Show notification at client
+                            if "INVITED YOU TO JOIN A GAME" in response:
+                                os.system('cls' if os.name == 'nt' else 'clear')
 
-                            print(f"📬 NEW NOTIFICATION:\n{response}")
-                            print("PRESS ENTER TO CONTINUE")
+                                print(f"📬 NEW NOTIFICATION:\n{response}")
+                                print("PRESS ENTER TO CONTINUE")
 
-                            # Save inviter username
-                            parts = response.split()
-                            self.inviter = parts[1]
+                                # Save inviter username
+                                parts = response.split()
+                                self.inviter = parts[1]
 
-                            self.notification = True
+                                self.notification = True
             except ConnectionError:
                 print("\n🚨 SERVER DISCONNECTED. EXITING CLIENT")
                 break
@@ -415,23 +426,58 @@ class User_Client:
         self.sock.close()
         print("\n🛑 CONNECTION TO SERVER CLOSED\n")
 
+    def handle_user_input(self):
+        self.choice = None
+        self.input_thread = None
+
+        def user_input():
+            # TODO problem here, 'choice' is the real variable, two inputs
+            self.choice = input("\n📟 CHOOSE AN OPTION: ")
+
+        if self.notification:
+            self.input_thread = threading.Thread(target=user_input, daemon=True)
+            self.input_thread.start()
+            self.input_thread.join(timeout=5)
+
     def main(self):
         self.connect()  # Connect user to SAI server
         logged_in_username = None  # Logged username
+        count = 5  # Qty seconds to timeout
         invite_checker = threading.Thread(
+            target=self.listen_invite_notification, daemon=True)
+
+        # TODO Second thread of dealing with invite while playing
+        invite_checker_while_playing = threading.Thread(
             target=self.listen_invite_notification, daemon=True)
 
         print("\n🎏 WELCOME TO FISHERMEN MASTERS\n")
 
         while True:
+            timeout_thrd = threading.Event()
+            timeout = False
+
             # Notifications options
             if self.notification:
                 # Only case ack or neg can be a valid option at input
                 self.input_ack_neg = True
                 os.system('cls' if os.name == 'nt' else 'clear')
                 print(f"📦 SEND BACK ACK:\n")
+                print(f" YOU HAVE {count} SECONDS TO RESPOND!")
                 print("[8] ACCEPT INVITATION")
                 print("[9] DECLINE INVITATION")
+
+                # regressive_counter(count=count)
+
+                self.handle_user_input()
+
+                if self.choice is None:
+                    timeout_thrd.set()
+                    self.input_thread.join()
+
+                # User take too long to respond and got timeout
+                if timeout_thrd.is_set():
+                    timeout = True  # Go to choice = "9", TODO create another choice?
+                    print("Time ran out and the invitation was automatically declined!")
 
             # User not yet logged in, show welcome options
             if not logged_in_username:
@@ -505,6 +551,11 @@ class User_Client:
             elif choice == "6" and logged_in_username:
                 os.system('cls' if os.name == 'nt' else 'clear')
 
+                # invite_checker_while_playing.start()
+                print("\n INITIATED SECOND INVITER")
+                time.sleep(1)
+                os.system('cls' if os.name == 'nt' else 'clear')
+
                 print("\n🏹 INITIATE GAME")
 
                 player_opponent = input("\n🔍 CHALLENGE THE USER: ")
@@ -524,7 +575,7 @@ class User_Client:
                 time.sleep(1)
 
                 self.send_message("GAME_ACK")  # Send SAI game accept
-                self.notification = False   # Remove notification
+                self.notification = False  # Remove notification
                 self.input_ack_neg = False  # Remove ack and neg as valid option at input
 
                 print(f"🍾 YOU ACCEPTED THE INVITATION\n")
@@ -584,7 +635,7 @@ class User_Client:
                         game_socket_guest.close()
 
             # Game invite declined
-            elif choice == "9" and logged_in_username and self.notification == True and self.input_ack_neg == True:
+            elif choice == "9" or timeout and logged_in_username and self.notification == True and self.input_ack_neg == True:
                 print("\n🔴 DECLINING\n")
                 time.sleep(1)
                 os.system('cls' if os.name == 'nt' else 'clear')
