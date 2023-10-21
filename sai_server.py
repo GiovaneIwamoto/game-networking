@@ -354,6 +354,18 @@ class SAI_Server:
                             conn_host.send(
                                 response_host_accepted.encode("utf-8"))
 
+                    elif response == "TIMEOUT":
+                        print('TIMEOUT UUUUU')
+                        game_info['status'] = 'TIMEOUT'
+
+                        # Send to host user client response command
+                        response_host_timeout = "TIMEOUT"
+
+                        if conn_host:
+                            conn_host.send(
+                                response_host_timeout.encode("utf-8"))
+
+
                     # Invitation declined by guest
                     elif response == "GAME_NEG":
                         game_info['status'] = 'DECLINED'

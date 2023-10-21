@@ -427,7 +427,7 @@ class User_Client:
         print("\n🛑 CONNECTION TO SERVER CLOSED\n")
 
     def handle_user_input(self):
-        self.choice = None
+        self.choice = 'TIMEOUT'
         self.input_thread = None
 
         def user_input():
@@ -470,6 +470,7 @@ class User_Client:
 
                 self.handle_user_input()
 
+                print(self.choice)
                 if self.choice is None:
                     timeout_thrd.set()
                     self.input_thread.join()
@@ -493,7 +494,11 @@ class User_Client:
                 print("[6] PLAY FISHERMEN MASTERS")
                 print("[7] LOGOUT")
 
-            choice = input("\n📟 CHOOSE AN OPTION: ")
+            #
+            choice = 'TIMEOUT' if self.choice is 'TIMEOUT' else self.choice
+            if not self.notification:
+                choice = input("\n📟 CHOOSE AN OPTION: ")
+
 
             # Register user
             if choice == "1" and not logged_in_username:
@@ -518,6 +523,9 @@ class User_Client:
                 # When authenticated by SAI start thread to listen for invite notifications
                 if logged_in_username:
                     invite_checker.start()
+
+                    # second thread to listen to invites while in game
+                    # invite_checker_while_playing.start()
 
                     time.sleep(1)
                     os.system('cls' if os.name == 'nt' else 'clear')
@@ -551,7 +559,7 @@ class User_Client:
             elif choice == "6" and logged_in_username:
                 os.system('cls' if os.name == 'nt' else 'clear')
 
-                # invite_checker_while_playing.start()
+                invite_checker_while_playing.start()
                 print("\n INITIATED SECOND INVITER")
                 time.sleep(1)
                 os.system('cls' if os.name == 'nt' else 'clear')
@@ -635,12 +643,21 @@ class User_Client:
                         game_socket_guest.close()
 
             # Game invite declined
-            elif choice == "9" or timeout and logged_in_username and self.notification == True and self.input_ack_neg == True:
+            elif choice == "9" and logged_in_username and self.notification == True and self.input_ack_neg == True:
                 print("\n🔴 DECLINING\n")
                 time.sleep(1)
                 os.system('cls' if os.name == 'nt' else 'clear')
 
                 self.send_message("GAME_NEG")
+                self.notification = False  # Remove notification
+                self.input_ack_neg = False  # Remove ack and neg as valid option at input
+
+            elif choice == "TIMEOUT" and logged_in_username and self.notification == True:
+                print("\n🔴 DECLINING BY TIMEOUT\n")
+                time.sleep(1)
+                os.system('cls' if os.name == 'nt' else 'clear')
+
+                self.send_message("TIMEOUT")
                 self.notification = False  # Remove notification
                 self.input_ack_neg = False  # Remove ack and neg as valid option at input
 
