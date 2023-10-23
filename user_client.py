@@ -18,6 +18,7 @@ class User_Client:
         self.notification = False  # Active notification controller
         self.input_ack_neg = False  # Controller for accept or decline notification at input
         self.inviter = None  # Store inviter username when user receive a notification
+        self.response_in_game = None  # Store SAI invite response when user is playing
 
     # Connection to server
     def connect(self):
@@ -178,6 +179,64 @@ class User_Client:
             score_opponent = 0
 
             for round_number in range(1, 6):  # Five rounds
+                leave_match = False  # User left match
+
+                # Invitation inside match received
+                if self.notification == True:
+                    # Save inviter username
+                    parts = self.response_in_game.split()
+                    self.inviter = parts[1]
+
+                    os.system('cls' if os.name == 'nt' else 'clear')
+
+                    while True:
+                        print(f"📬 NEW NOTIFICATION:\n{self.response_in_game}")
+                        print(f"📢 SEND BACK ACK TO {self.inviter}:\n")
+                        print("[8] LEAVE THE MATCH TO ACCEPT INVITE")
+                        print("[9] DECLINE INVITATION AND CONTINUE PLAYING")
+
+                        choice = input("\n📟 CHOOSE AN OPTION: ")
+
+                        if choice == "8":  # Accept invitation to join another match
+                            print("\n🟠 LEAVING MATCH\n")
+                            time.sleep(1)
+
+                            self.notification = True  # When returns to lobby, client deal with the invitation
+                            self.input_ack_neg = False  # Remove ack and neg as valid option at input
+                            self.response_in_game = None  # Store SAI invite response from invitation
+                            leave_match = True  # User left match
+
+                            os.system('cls' if os.name == 'nt' else 'clear')
+
+                            print(
+                                f"💨 SELF: {player_self}, YOU LEFT THE MATCH\n")
+                            print(
+                                f"🥈 SORRY, {player_self}! YOU LOST THE GAME!\n")
+
+                            print("⌚ RETURNING TO LOBBY\n")
+                            time.sleep(1)
+                            break
+
+                        elif choice == "9":  # Decline invitation, continue playing
+                            # TODO: Fix declining
+                            print("\n🔴 DECLINING\n")
+                            time.sleep(1)
+
+                            os.system('cls' if os.name == 'nt' else 'clear')
+
+                            self.notification = False  # Remove notification
+                            self.input_ack_neg = False  # Remove ack and neg as valid option at input
+                            self.response_in_game = None  # Store SAI invite response from invitation
+                            leave_match = False
+                            break
+
+                        else:  # Invalid input
+                            os.system('cls' if os.name == 'nt' else 'clear')
+                            print("\n⛔ INVALID OPTION, CHOOSE A VALID ONE\n")
+
+                if leave_match == True:  # Player self left match to join another one
+                    break
+
                 os.system('cls' if os.name == 'nt' else 'clear')
                 print(
                     f"🦀 ROUND {round_number}: {player_self} VS {player_opponent}\n")
@@ -395,7 +454,7 @@ class User_Client:
                     if ready_to_read:
                         response = self.receive_response()
                         # Show notification at client
-                        if "INVITED YOU TO JOIN A GAME" in response:
+                        if "INVITED YOU TO JOIN A GAME" in response:  # Case user is online
                             os.system('cls' if os.name == 'nt' else 'clear')
 
                             print(f"📬 NEW NOTIFICATION:\n{response}")
@@ -404,8 +463,12 @@ class User_Client:
                             # Save inviter username
                             parts = response.split()
                             self.inviter = parts[1]
-
                             self.notification = True
+
+                        if "INVITED YOU TO JOIN ANOTHER GAME" in response:  # Case user is playing
+                            self.response_in_game = response
+                            self.notification = True
+
             except ConnectionError:
                 print("\n🚨 SERVER DISCONNECTED. EXITING CLIENT")
                 break
@@ -429,7 +492,7 @@ class User_Client:
                 # Only case ack or neg can be a valid option at input
                 self.input_ack_neg = True
                 os.system('cls' if os.name == 'nt' else 'clear')
-                print(f"📦 SEND BACK ACK:\n")
+                print(f"📦 SEND BACK ACK TO {self.inviter}:\n")
                 print("[8] ACCEPT INVITATION")
                 print("[9] DECLINE INVITATION")
 
@@ -488,21 +551,21 @@ class User_Client:
             # Users PLAYING are not considered as ONLINE
 
             # List online users
-            elif choice == "4" and logged_in_username:
+            elif choice == "4" and logged_in_username and self.input_ack_neg == False:
                 os.system('cls' if os.name == 'nt' else 'clear')
 
                 print("\n🧭 LISTING USERS ONLINE")
                 client.list_users_online(logged_in_username)
 
             # List playing users
-            elif choice == "5" and logged_in_username:
+            elif choice == "5" and logged_in_username and self.input_ack_neg == False:
                 os.system('cls' if os.name == 'nt' else 'clear')
 
                 print("\n🧭 LISTING USERS PLAYING")
                 client.list_users_playing()
 
             # Initiate game
-            elif choice == "6" and logged_in_username:
+            elif choice == "6" and logged_in_username and self.input_ack_neg == False:
                 os.system('cls' if os.name == 'nt' else 'clear')
 
                 print("\n🏹 INITIATE GAME")
@@ -511,7 +574,7 @@ class User_Client:
                 client.initiate_game(logged_in_username, player_opponent)
 
             # Logout from server
-            elif choice == "7" and logged_in_username:
+            elif choice == "7" and logged_in_username and self.input_ack_neg == False:
                 os.system('cls' if os.name == 'nt' else 'clear')
 
                 print("\n🚀 LOGGING OUT")
@@ -597,7 +660,9 @@ class User_Client:
             else:
                 os.system('cls' if os.name == 'nt' else 'clear')
 
-                self.send_message("NOTHING")
+                if self.input_ack_neg == False:
+                    self.send_message("NOTHING")
+
                 print("\n⛔ INVALID OPTION, CHOOSE A VALID ONE\n")
 
         self.running = False  # Sign thread to stop execution

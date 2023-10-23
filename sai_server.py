@@ -4,6 +4,7 @@ import socket
 import threading
 import json
 import uuid
+import os
 from datetime import datetime
 
 
@@ -310,14 +311,16 @@ class SAI_Server:
             if host in self.users and guest in self.users:
 
                 # Check if user invited is online
-                if self.users[host]['status'] == 'ONLINE' and self.users[guest]['status'] == 'ONLINE':
+                if (self.users[host]['status'] == 'ONLINE') and (self.users[guest]['status'] == 'ONLINE' or self.users[guest]['status'] == 'PLAYING'):
 
                     # Generate unique token for the game
                     game_token = self.generate_unique_token()
 
                     # Initiate game notification
                     response_host = f"🔔 INVITED {guest} TO A GAME\n"
-                    response_guest = f"🔔 {host} INVITED YOU TO JOIN A GAME\n"
+
+                    response_guest_online = f"🔔 {host} INVITED YOU TO JOIN A GAME\n"
+                    response_guest_playing = f"🔔 {host} INVITED YOU TO JOIN ANOTHER GAME\n"
 
                     # Get participants connections
                     conn_host = self.get_user_connection(host)
@@ -337,8 +340,11 @@ class SAI_Server:
                     if conn_host:
                         conn_host.send(response_host.encode("utf-8"))
 
-                    if conn_guest:
-                        conn_guest.send(response_guest.encode("utf-8"))
+                    if conn_guest and self.users[guest]['status'] == 'ONLINE':
+                        conn_guest.send(response_guest_online.encode("utf-8"))
+
+                    if conn_guest and self.users[guest]['status'] == 'PLAYING':
+                        conn_guest.send(response_guest_playing.encode("utf-8"))
 
                     # Wait for guest response
                     response = conn_guest.recv(1024).decode("utf-8")
@@ -454,5 +460,6 @@ class SAI_Server:
 
 # Script being executed as main program and being run directly
 if __name__ == "__main__":
+    os.system('cls' if os.name == 'nt' else 'clear')
     sai_server = SAI_Server("127.0.0.1", 4000)  # SAI instance
     sai_server.start()                          # Initiates server's execution
