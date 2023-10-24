@@ -340,46 +340,70 @@ class SAI_Server:
                     if conn_host:
                         conn_host.send(response_host.encode("utf-8"))
 
+                    # Invite to join a new game for an online user
                     if conn_guest and self.users[guest]['status'] == 'ONLINE':
                         conn_guest.send(response_guest_online.encode("utf-8"))
 
+                    # Invite to join another game for a playing user
                     if conn_guest and self.users[guest]['status'] == 'PLAYING':
                         conn_guest.send(response_guest_playing.encode("utf-8"))
 
                     # Wait for guest response
-                    response = conn_guest.recv(1024).decode("utf-8")
+                    response = None
 
-                    # Invitation accepted by guest
-                    if response == "GAME_ACK":
-                        game_info['status'] = 'ACCEPTED'
+                    def wait_for_response():  # Wait for a response
+                        nonlocal response
+                        response = conn_guest.recv(1024).decode("utf-8")
 
-                        # Send to host user client response command
-                        response_host_accepted = "ACCEPTED"
+                    # Create a thread to run wait for response function
+                    response_thread = threading.Thread(
+                        target=wait_for_response)
 
-                        if conn_host:
-                            conn_host.send(
-                                response_host_accepted.encode("utf-8"))
+                    response_thread.start()  # Start thread
 
-                    # Invitation declined by guest
-                    elif response == "GAME_NEG":
+                    # Wait for thread to finish or timeout
+                    response_thread.join(timeout=5)
+
+                    if response is None:  # No response received within timeout
+                        # Guest did not answer
                         game_info['status'] = 'DECLINED'
+                        response_afk = "TIMEOUT"
 
-                        # Send to host user client response command
-                        response_host_declined = "DECLINED"
+                        if conn_host:  # Send to host timeout
+                            conn_host.send(response_afk.encode("utf-8"))
 
-                        if conn_host:
-                            conn_host.send(
-                                response_host_declined.encode("utf-8"))
-
-                    # Unexpected response from guest
                     else:
-                        game_info['status'] = 'DECLINED'
+                        # Invitation accepted by guest
+                        if response == "GAME_ACK":
+                            game_info['status'] = 'ACCEPTED'
 
-                        # Invitation cancelled by server
-                        response_host_unexpected = "UNEXPECTED RESPONSE"
-                        if conn_host:
-                            conn_host.send(
-                                response_host_unexpected.encode("utf-8"))
+                            # Send to host user client response command
+                            response_host_accepted = "ACCEPTED"
+
+                            if conn_host:
+                                conn_host.send(
+                                    response_host_accepted.encode("utf-8"))
+
+                        # Invitation declined by guest
+                        elif response == "GAME_NEG":
+                            game_info['status'] = 'DECLINED'
+
+                            # Send to host user client response command
+                            response_host_declined = "DECLINED"
+
+                            if conn_host:
+                                conn_host.send(
+                                    response_host_declined.encode("utf-8"))
+
+                        # Unexpected response from guest
+                        else:
+                            game_info['status'] = 'DECLINED'
+
+                            # Invitation cancelled by server
+                            response_host_unexpected = "UNEXPECTED RESPONSE"
+                            if conn_host:
+                                conn_host.send(
+                                    response_host_unexpected.encode("utf-8"))
 
         # Guest not found or offline
         response = "💣 PLAYER NOT FOUND OR OFFLINE\n"
