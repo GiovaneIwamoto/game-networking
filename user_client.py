@@ -34,8 +34,18 @@ class User_Client:
 
     # Server response receiver
     def receive_response(self):
-        data = self.sock.recv(1024)  # Socket receive response from server
-        return data.decode("utf-8")
+        try:
+            data = self.sock.recv(1024)  # Socket receive response from server
+            if not data:
+                return None
+            response = data.decode("utf-8")
+            return response
+        except ConnectionAbortedError as e:
+            print(
+                f"⛔ CONNECTION WAS TERMINATED BY THE SOFTWARE ON THE HOST")
+            return None
+        except Exception as e:
+            print(f"⛔ AN UNHANDLED EXCEPTION OCCURRED")
 
     # Send registration command
     def register_user(self, username, password):
@@ -87,7 +97,7 @@ class User_Client:
 
         # Send invite and wait for guest response
         if "INVITED" in response:
-            print("⏰ WAITING FOR GUEST RESPONSE...\n")
+            print("⏰ WAITING 5 SEC FOR GUEST RESPONSE...\n")
 
             response_invite = self.receive_response()
 
@@ -104,6 +114,7 @@ class User_Client:
                 print(f"🧹 GAME INVITE DECLINED BY GUEST\n")
 
             elif "TIMEOUT" in response_invite:
+                os.system('cls' if os.name == 'nt' else 'clear')
                 print(f"💤 GUEST SEEMS TO BE AFK\n")
 
             else:
@@ -218,16 +229,18 @@ class User_Client:
                             break
 
                         elif choice == "9":  # Decline invitation, continue playing
-                            # TODO: Fix declining
+                            # TODO: fix declining
                             print("\n🔴 DECLINING\n")
                             time.sleep(1)
 
                             os.system('cls' if os.name == 'nt' else 'clear')
 
-                            self.notification = False  # Remove notification
+                            # When returns to lobby, client do not deal with the invitation
+                            self.notification = False
+
                             self.input_ack_neg = False  # Remove ack and neg as valid option at input
                             self.response_in_game = None  # Store SAI invite response from invitation
-                            leave_match = False
+                            leave_match = False  # User don't leave match
                             break
 
                         else:  # Invalid input
@@ -594,6 +607,8 @@ class User_Client:
 
                 player_opponent = self.inviter  # Save opponent's namne
                 self.inviter = None  # Set back the inviter's to none
+
+                # TODO: Fix when invite timeout, user cannot accept
 
                 # Wait for SAI response about which socket to connect to
                 response = self.receive_response()
