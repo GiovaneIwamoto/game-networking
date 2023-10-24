@@ -20,6 +20,9 @@ class User_Client:
         self.inviter = None  # Store inviter username when user receive a notification
         self.response_in_game = None  # Store SAI invite response when user is playing
 
+        # True means invite has expired, False means invite still can be ack or neg
+        self.invite_expired = False
+
     # Connection to server
     def connect(self):
         self.sock.connect((self.host, self.port))
@@ -97,7 +100,7 @@ class User_Client:
 
         # Send invite and wait for guest response
         if "INVITED" in response:
-            print("⏰ WAITING 5 SEC FOR GUEST RESPONSE...\n")
+            print("⏰ WAITING 10 SEC FOR GUEST RESPONSE\n")
 
             response_invite = self.receive_response()
 
@@ -229,7 +232,6 @@ class User_Client:
                             break
 
                         elif choice == "9":  # Decline invitation, continue playing
-                            # TODO: fix declining
                             print("\n🔴 DECLINING\n")
                             time.sleep(1)
 
@@ -454,6 +456,12 @@ class User_Client:
         else:
             return "❓"  # Unknown animal icon
 
+    # SAI Timeout is 10 seconds, considering RTT and 1 second delay to guest send back
+    # ACK or NEG, invite must be set back to expired in less than 9 seconds
+    def set_invite_expired(self):
+        time.sleep(8)
+        self.invite_expired = True
+
     # Thread to listen for invite notifications
     def listen_invite_notification(self):
         while self.running:
@@ -476,11 +484,18 @@ class User_Client:
                             # Save inviter username
                             parts = response.split()
                             self.inviter = parts[1]
-                            self.notification = True
+                            self.notification = True  # Notification active
+                            self.invite_expired = False  # Set invite as not expired
 
+                            # Invitation timeout client side
+                            timer_thread = threading.Thread(
+                                target=self.set_invite_expired)
+                            timer_thread.start()
+
+                        # TODO: Set timeout for invitation while playing
                         if "INVITED YOU TO JOIN ANOTHER GAME" in response:  # Case user is playing
                             self.response_in_game = response
-                            self.notification = True
+                            self.notification = True  # Notification active
 
             except ConnectionError:
                 print("\n🚨 SERVER DISCONNECTED. EXITING CLIENT")
@@ -501,13 +516,24 @@ class User_Client:
 
         while True:
             # Notifications options
-            if self.notification:
+            if (self.notification) and (self.invite_expired == False):
                 # Only case ack or neg can be a valid option at input
                 self.input_ack_neg = True
                 os.system('cls' if os.name == 'nt' else 'clear')
                 print(f"📦 SEND BACK ACK TO {self.inviter}:\n")
                 print("[8] ACCEPT INVITATION")
                 print("[9] DECLINE INVITATION")
+
+            # Received an invitation but it has expired
+            if (self.notification) and (self.invite_expired == True):
+                print(f"📢 INVITATION FROM {self.inviter} EXPIRED\n")
+
+                # Send anything back to SAI to reload client response receiver
+                self.send_message("NOTHING")
+
+                self.notification = False  # Remove notification
+                self.input_ack_neg = False  # Remove ack and neg as valid option at input
+                self.invite_expired = False  # Set invite as not expired
 
             # User not yet logged in, show welcome options
             if not logged_in_username:
@@ -595,7 +621,7 @@ class User_Client:
                 break
 
             # Game invite accepted
-            elif choice == "8" and logged_in_username and self.notification == True and self.input_ack_neg == True:
+            elif choice == "8" and logged_in_username and self.notification == True and self.input_ack_neg == True and self.invite_expired == False:
                 print("\n🟢 ACCEPTING\n")
                 time.sleep(1)
 
@@ -607,8 +633,6 @@ class User_Client:
 
                 player_opponent = self.inviter  # Save opponent's namne
                 self.inviter = None  # Set back the inviter's to none
-
-                # TODO: Fix when invite timeout, user cannot accept
 
                 # Wait for SAI response about which socket to connect to
                 response = self.receive_response()
@@ -662,7 +686,7 @@ class User_Client:
                         game_socket_guest.close()
 
             # Game invite declined
-            elif choice == "9" and logged_in_username and self.notification == True and self.input_ack_neg == True:
+            elif choice == "9" and logged_in_username and self.notification == True and self.input_ack_neg == True and self.invite_expired == False:
                 print("\n🔴 DECLINING\n")
                 time.sleep(1)
                 os.system('cls' if os.name == 'nt' else 'clear')
@@ -678,7 +702,8 @@ class User_Client:
                 if self.input_ack_neg == False:
                     self.send_message("NOTHING")
 
-                print("\n⛔ INVALID OPTION, CHOOSE A VALID ONE\n")
+                if self.invite_expired == False:
+                    print("\n⛔ INVALID OPTION, CHOOSE A VALID ONE\n")
 
         self.running = False  # Sign thread to stop execution
 

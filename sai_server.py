@@ -362,7 +362,7 @@ class SAI_Server:
                     response_thread.start()  # Start thread
 
                     # Wait for thread to finish or timeout
-                    response_thread.join(timeout=5)
+                    response_thread.join(timeout=10)  # Timeout 10 seconds
 
                     if response is None:  # No response received within timeout
                         # Guest did not answer
@@ -372,6 +372,8 @@ class SAI_Server:
                         if conn_host:  # Send to host timeout
                             conn_host.send(response_afk.encode("utf-8"))
 
+                        if conn_guest:  # Send to guest timeout
+                            conn_host.send(response_afk.encode("utf-8"))
                     else:
                         # Invitation accepted by guest
                         if response == "GAME_ACK":
