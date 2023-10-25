@@ -369,6 +369,15 @@ class SAI_Server:
                         game_info['status'] = 'DECLINED'
                         response_afk = "TIMEOUT"
 
+                        # Event user seems to be afk, doesn't answer
+                        afk_event = f"💤 USER SEEMS TO BE AFK: {guest}"
+
+                        # Stdout SAI server event
+                        self.stdout_event(afk_event)
+
+                        # Afk event to log file
+                        self.log_event(afk_event)
+
                         if conn_host:  # Send to host timeout
                             conn_host.send(response_afk.encode("utf-8"))
 
