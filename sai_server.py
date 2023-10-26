@@ -362,7 +362,7 @@ class SAI_Server:
                     response_thread.start()  # Start thread
 
                     # Wait for thread to finish or timeout
-                    response_thread.join(timeout=10)  # Timeout 10 seconds
+                    response_thread.join(timeout=15)  # Timeout 15 seconds
 
                     if response is None:  # No response received within timeout
                         # Guest did not answer

@@ -19,6 +19,8 @@ class User_Client:
         self.input_ack_neg = False  # Controller for accept or decline notification at input
         self.inviter = None  # Store inviter username when user receive a notification
         self.response_in_game = None  # Store SAI invite response when user is playing
+        self.match_declined = False  # Controller for refused invites while playing
+        self.invite_time_left = 0  # Timer for expired invitation
 
         # True means invite has expired, False means invite still can be ack or neg
         self.invite_expired = False
@@ -100,7 +102,7 @@ class User_Client:
 
         # Send invite and wait for guest response
         if "INVITED" in response:
-            print("⏰ WAITING 10 SEC FOR GUEST RESPONSE\n")
+            print("⏰ WAITING 15 SEC FOR GUEST RESPONSE\n")
 
             response_invite = self.receive_response()
 
@@ -116,7 +118,7 @@ class User_Client:
                 os.system('cls' if os.name == 'nt' else 'clear')
                 print(f"🧹 GAME INVITE DECLINED BY GUEST\n")
 
-            elif "TIMEOUT" in response_invite:
+            elif "TIMEOUT" in response_invite:  # TODO: Playing users do not seem to be afk
                 os.system('cls' if os.name == 'nt' else 'clear')
                 print(f"💤 GUEST SEEMS TO BE AFK\n")
 
@@ -169,6 +171,7 @@ class User_Client:
                     command = f"GAME_OVER {player_host}"
                     self.send_message(command)
 
+                    # TODO: Opponent left
                     # Guest detected that opponent has left the match
                     # command = f"OPNT_LEFT {logged_in_username} {player_opponent}"
                     # self.send_message(command)
@@ -184,6 +187,8 @@ class User_Client:
                     time.sleep(1)
 
                     game_socket_P2P.close()
+                    # Send anything back to SAI to reload client response receiver
+                    self.send_message("NOTHING")
 
     # Game logic
     def start_game(self, game_socket_self, player_self, player_opponent):
@@ -196,7 +201,7 @@ class User_Client:
                 leave_match = False  # User left match
 
                 # Invitation inside match received
-                if self.notification == True:
+                if (self.notification == True) and (self.invite_expired == False):
                     # Save inviter username
                     parts = self.response_in_game.split()
                     self.inviter = parts[1]
@@ -212,37 +217,69 @@ class User_Client:
                         choice = input("\n📟 CHOOSE AN OPTION: ")
 
                         if choice == "8":  # Accept invitation to join another match
-                            print("\n🟠 LEAVING MATCH\n")
-                            time.sleep(1)
+                            # Accepted but invite has already expired
+                            if self.invite_expired == True:
+                                os.system('cls' if os.name ==
+                                          'nt' else 'clear')
+                                print(
+                                    f"📢 INVITATION FROM {self.inviter} EXPIRED")
+                                print(
+                                    f"♻️  CONTINUING MATCH AGAINST {player_opponent}")
+                                time.sleep(1)
 
-                            self.notification = True  # When returns to lobby, client deal with the invitation
-                            self.input_ack_neg = False  # Remove ack and neg as valid option at input
-                            self.response_in_game = None  # Store SAI invite response from invitation
-                            leave_match = True  # User left match
+                                # When returns to lobby, client do not deal with the invitation
+                                self.notification = False
+                                self.input_ack_neg = False  # Remove ack and neg as valid option at input
+                                self.response_in_game = None  # Store SAI invite response from invitation
+                                self.invite_expired = True  # Set invite to expired again
+                                leave_match = False  # User don't leave match
 
-                            os.system('cls' if os.name == 'nt' else 'clear')
+                                # Not used to refuse invitation but to tell client there is no need to deal with this invite anymore
+                                self.match_declined = True
+                                break
 
-                            print(
-                                f"💨 SELF: {player_self}, YOU LEFT THE MATCH\n")
-                            print(
-                                f"🥈 SORRY, {player_self}! YOU LOST THE GAME!\n")
+                            else:  # Invite not expired
+                                print("\n🟠 LEAVING MATCH\n")
+                                time.sleep(1)
 
-                            print("⌚ RETURNING TO LOBBY\n")
-                            time.sleep(1)
-                            break
+                                self.notification = True  # When returns to lobby, client deal with the invitation
+                                leave_match = True  # User left match
+
+                                # FIXME: Maybe there is no need to set this vars back
+                                self.input_ack_neg = False  # Remove ack and neg as valid option at input
+                                self.response_in_game = None  # Store SAI invite response from invitation
+                                self.invite_expired = False  # Invite not expired
+
+                                os.system('cls' if os.name ==
+                                          'nt' else 'clear')
+
+                                print(
+                                    f"💨 SELF: {player_self}, YOU LEFT THE MATCH\n")
+                                print(
+                                    f"🥈 SORRY, {player_self}! YOU LOST THE GAME!\n")
+
+                                print("⌚ RETURNING TO LOBBY\n")
+                                time.sleep(1)
+                                break
 
                         elif choice == "9":  # Decline invitation, continue playing
-                            print("\n🔴 DECLINING\n")
+                            print("\n🔴 DECLINING")
+                            print(
+                                f"♻️ CONTINUING MATCH AGAINST {player_opponent}")
+
                             time.sleep(1)
 
                             os.system('cls' if os.name == 'nt' else 'clear')
 
                             # When returns to lobby, client do not deal with the invitation
                             self.notification = False
-
                             self.input_ack_neg = False  # Remove ack and neg as valid option at input
                             self.response_in_game = None  # Store SAI invite response from invitation
-                            leave_match = False  # User don't leave match
+                            self.invite_expired = True  # Set invite to expired
+                            leave_match = False  # User do not leave match
+
+                            # Match was declined, no need to deal with this invite anymore when return to lobby
+                            self.match_declined = True
                             break
 
                         else:  # Invalid input
@@ -456,10 +493,19 @@ class User_Client:
         else:
             return "❓"  # Unknown animal icon
 
-    # SAI Timeout is 10 seconds, considering RTT and 1 second delay to guest send back
-    # ACK or NEG, invite must be set back to expired in less than 9 seconds
-    def set_invite_expired(self):
-        time.sleep(8)
+    # SAI Timeout is 15 seconds, considering RTT and 1 second delay to guest send back
+    # ACK or NEG, invite must be set back to expired in less than 14 seconds
+    def set_invite_expired_online(self):
+        time.sleep(13)
+        self.invite_expired = True
+
+    # FIXME: Invite expires too soon, can be more lasting
+    # 2 seconds to leave current match, 1 second to ACK or NEG + Delay user (2)
+    def set_invite_expired_playing(self):
+        self.invite_time_left = 10
+        for i in range(8, 0, -1):
+            time.sleep(1)
+            self.invite_time_left = i
         self.invite_expired = True
 
     # Thread to listen for invite notifications
@@ -487,15 +533,20 @@ class User_Client:
                             self.notification = True  # Notification active
                             self.invite_expired = False  # Set invite as not expired
 
-                            # Invitation timeout client side
+                            # Invitation timeout client side when self is online
                             timer_thread = threading.Thread(
-                                target=self.set_invite_expired)
+                                target=self.set_invite_expired_online)
                             timer_thread.start()
 
-                        # TODO: Set timeout for invitation while playing
                         if "INVITED YOU TO JOIN ANOTHER GAME" in response:  # Case user is playing
-                            self.response_in_game = response
+                            self.response_in_game = response  # Store SAI invite response
                             self.notification = True  # Notification active
+                            self.invite_expired = False  # Set invite as not expired
+
+                            # Invitation timeout client side when self is playing
+                            timer_thread = threading.Thread(
+                                target=self.set_invite_expired_playing)
+                            timer_thread.start()
 
             except ConnectionError:
                 print("\n🚨 SERVER DISCONNECTED. EXITING CLIENT")
@@ -515,6 +566,12 @@ class User_Client:
         print("\n🎏 WELCOME TO FISHERMEN MASTERS\n")
 
         while True:
+            # Playing user declines invitation
+            if self.match_declined == True:
+                # FIXME: May cause some problem, ckeck if negs a invite. Used for reloading client lobby
+                self.send_message("GAME_NEG")
+                self.match_declined = False
+
             # Notifications options
             if (self.notification) and (self.invite_expired == False):
                 # Only case ack or neg can be a valid option at input
@@ -669,6 +726,7 @@ class User_Client:
                         command = f"GAME_OVER {logged_in_username}"
                         self.send_message(command)
 
+                        # TODO: Opponent left
                         # Guest detected that opponent has left the match
                         # command = f"OPNT_LEFT {logged_in_username} {player_opponent}"
                         # self.send_message(command)
@@ -684,6 +742,9 @@ class User_Client:
                         time.sleep(1)
 
                         game_socket_guest.close()
+
+                        # Send anything back to SAI to reload client response receiver
+                        self.send_message("NOTHING")
 
             # Game invite declined
             elif choice == "9" and logged_in_username and self.notification == True and self.input_ack_neg == True and self.invite_expired == False:
