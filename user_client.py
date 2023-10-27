@@ -251,7 +251,6 @@ class User_Client:
                                 self.notification = True  # When returns to lobby, client deal with the invitation
                                 leave_match = True  # User left match
 
-                                # FIXME: Maybe there is no need to set this vars back
                                 self.input_ack_neg = False  # Remove ack and neg as valid option at input
                                 self.response_in_game = None  # Store SAI invite response from invitation
                                 self.invite_expired = False  # Invite not expired
@@ -505,11 +504,10 @@ class User_Client:
         time.sleep(13)
         self.invite_expired = True
 
-    # FIXME: Invite expires too soon, can be more lasting
-    # 2 seconds to leave current match, 1 second to ACK or NEG + Delay user (2)
+    # Delay 2 seconds to leave current match + 1 second to ACK or NEG + 2 seconds user send response
     def set_invite_expired_playing(self):
         self.invite_time_left = 10
-        for i in range(8, 0, -1):
+        for i in range(9, 0, -1):
             time.sleep(1)
             self.invite_time_left = i
         self.invite_expired = True
@@ -574,7 +572,7 @@ class User_Client:
         while True:
             # Playing user declines invitation
             if self.match_declined == True:
-                # FIXME: May cause some problem, ckeck if negs a invite. Used for reloading client lobby
+                # Used for reloading client lobby
                 self.send_message("GAME_NEG")
                 self.match_declined = False
 
