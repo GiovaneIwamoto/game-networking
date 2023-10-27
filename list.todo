@@ -1,3 +1,3 @@
 Build simultaneous invitations and multiple invitations
-
-EXTRA: Build log event user leave match
+Build timeout round playing
+Fix host invite and wait for response, must wait response only from guest, other user cannot send him an invitation

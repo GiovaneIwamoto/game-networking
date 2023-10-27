@@ -177,11 +177,6 @@ class User_Client:
                     command = f"GAME_OVER {player_host}"
                     self.send_message(command)
 
-                    # TODO: Opponent left
-                    # Guest detected that opponent has left the match
-                    # command = f"OPNT_LEFT {logged_in_username} {player_opponent}"
-                    # self.send_message(command)
-
                     # Show host win message
                     os.system('cls' if os.name == 'nt' else 'clear')
                     print(
@@ -729,11 +724,6 @@ class User_Client:
                         # Guest after match ends send to SAI game over command to set back status to online
                         command = f"GAME_OVER {logged_in_username}"
                         self.send_message(command)
-
-                        # TODO: Opponent left
-                        # Guest detected that opponent has left the match
-                        # command = f"OPNT_LEFT {logged_in_username} {player_opponent}"
-                        # self.send_message(command)
 
                         # Show guest win message
                         os.system('cls' if os.name == 'nt' else 'clear')

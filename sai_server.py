@@ -185,10 +185,6 @@ class SAI_Server:
         elif command == "GAME_OVER":
             self.game_over(parts[1])
 
-        # Opponent left command
-        elif command == "OPNT_LEFT":
-            self.opponent_left(parts[1], parts[2])
-
         return logged_in_username  # Important return for disconnection control
 
     # User registration server response
@@ -473,16 +469,6 @@ class SAI_Server:
         # Update status for online
         self.users[player_self]['status'] = 'ONLINE'
         self.save_users_to_file()
-
-    # Detected opponent left match. Set opponent's status back
-    def opponent_left(self, player_self, player_opponent):
-        left_event_opponent = f"💨 USER LEFT MATCH: {player_opponent} AGAINST: {player_self}"
-
-        # Stdout SAI server event
-        self.stdout_event(left_event_opponent)
-
-        # Left event to log file
-        self.log_event(left_event_opponent)
 
     # Log file event addition
     def log_event(self, event):
