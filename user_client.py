@@ -118,9 +118,15 @@ class User_Client:
                 os.system('cls' if os.name == 'nt' else 'clear')
                 print(f"🧹 GAME INVITE DECLINED BY GUEST\n")
 
-            elif "TIMEOUT" in response_invite:  # TODO: Playing users do not seem to be afk
+            # Timeout, user invited is online but did not respond
+            elif "TIMEOUT" in response_invite:
                 os.system('cls' if os.name == 'nt' else 'clear')
                 print(f"💤 GUEST SEEMS TO BE AFK\n")
+
+            # Ignored, user invited is playing but ignored invitation
+            elif "IGNORED" in response_invite:
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print(f"🔕 GUEST IGNORED YOUR INVITATION\n")
 
             else:
                 print("❓ UNEXPECTED RESPONSE FROM GUEST\n")

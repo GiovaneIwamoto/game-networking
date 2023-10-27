@@ -368,21 +368,29 @@ class SAI_Server:
                         # Guest did not answer
                         game_info['status'] = 'DECLINED'
                         response_afk = "TIMEOUT"
+                        response_ignore = "IGNORED"
 
-                        # Event user seems to be afk, doesn't answer
-                        afk_event = f"💤 USER SEEMS TO BE AFK: {guest}"
+                        # User online and do not respond
+                        if self.users[guest]['status'] == 'ONLINE':
+                            # Event user seems to be afk, doesn't answer
+                            afk_event = f"💤 USER SEEMS TO BE AFK: {guest}"
+                            response_guest = response_afk
 
-                        # Stdout SAI server event
-                        self.stdout_event(afk_event)
+                            # Stdout SAI server event
+                            self.stdout_event(afk_event)
+                            # Afk event to log file
+                            self.log_event(afk_event)
 
-                        # Afk event to log file
-                        self.log_event(afk_event)
+                        # User playing and did not respond
+                        elif self.users[guest]['status'] == 'PLAYING':
+                            # Event user ignored invite, didn't answer
+                            response_guest = response_ignore
 
                         if conn_host:  # Send to host timeout
-                            conn_host.send(response_afk.encode("utf-8"))
+                            conn_host.send(response_guest.encode("utf-8"))
 
                         if conn_guest:  # Send to guest timeout
-                            conn_host.send(response_afk.encode("utf-8"))
+                            conn_host.send(response_guest.encode("utf-8"))
                     else:
                         # Invitation accepted by guest
                         if response == "GAME_ACK":
