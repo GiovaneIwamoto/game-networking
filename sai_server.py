@@ -185,6 +185,10 @@ class SAI_Server:
         elif command == "GAME_OVER":
             self.game_over(parts[1])
 
+        # User back available command
+        elif command == "AVAILABLE":
+            self.set_invite_status_available(parts[1])
+
         return logged_in_username  # Important return for disconnection control
 
     # User registration server response
@@ -228,6 +232,9 @@ class SAI_Server:
 
                     # Update status for online when logged in
                     self.users[username]['status'] = 'ONLINE'
+
+                    # Update status for logged in users to available to receive notifications
+                    self.users[username]['notification'] = 'AVAILABLE'
 
                     # Event log login
                     user_event = f"📌 USER LOGGED IN: {username}"
@@ -306,8 +313,8 @@ class SAI_Server:
             # Check users existence
             if host in self.users and guest in self.users:
 
-                # Check if user invited is online
-                if (self.users[host]['status'] == 'ONLINE') and (self.users[guest]['status'] == 'ONLINE' or self.users[guest]['status'] == 'PLAYING'):
+                # Check if host user is online, guest is online or playing, guest is available to receive notifications
+                if (self.users[host]['status'] == 'ONLINE') and (self.users[guest]['status'] == 'ONLINE' or self.users[guest]['status'] == 'PLAYING') and (self.users[guest]['notification'] == 'AVAILABLE'):
 
                     # Generate unique token for the game
                     game_token = self.generate_unique_token()
@@ -335,6 +342,11 @@ class SAI_Server:
                     # If connections exists, send notification
                     if conn_host:
                         conn_host.send(response_host.encode("utf-8"))
+
+                        # Set availability to receive notifications to busy
+                        self.users[host]['notification'] = 'BUSY'
+                        self.users[guest]['notification'] = 'BUSY'
+                        self.save_users_to_file()   # Save user data to database file
 
                     # Invite to join a new game for an online user
                     if conn_guest and self.users[guest]['status'] == 'ONLINE':
@@ -366,11 +378,20 @@ class SAI_Server:
                         response_afk = "TIMEOUT"
                         response_ignore = "IGNORED"
 
+                        # Set availability to receive notifications back to available
+                        self.users[host]['notification'] = 'AVAILABLE'
+                        self.users[guest]['notification'] = 'AVAILABLE'
+                        self.save_users_to_file()   # Save user data to database file
+
                         # User online and do not respond
                         if self.users[guest]['status'] == 'ONLINE':
                             # Event user seems to be afk, doesn't answer
                             afk_event = f"💤 USER SEEMS TO BE AFK: {guest}"
                             response_guest = response_afk
+
+                            # Guest is still AFK, did not answer previous notification, keep him busy
+                            self.users[guest]['notification'] = 'BUSY'
+                            self.save_users_to_file()   # Save user data to database file
 
                             # Stdout SAI server event
                             self.stdout_event(afk_event)
@@ -388,6 +409,11 @@ class SAI_Server:
                         if conn_guest:  # Send to guest timeout
                             conn_host.send(response_guest.encode("utf-8"))
                     else:
+                        # Set availability to receive notifications back to available
+                        self.users[host]['notification'] = 'AVAILABLE'
+                        self.users[guest]['notification'] = 'AVAILABLE'
+                        self.save_users_to_file()   # Save user data to database file
+
                         # Invitation accepted by guest
                         if response == "GAME_ACK":
                             game_info['status'] = 'ACCEPTED'
@@ -419,6 +445,15 @@ class SAI_Server:
                             if conn_host:
                                 conn_host.send(
                                     response_host_unexpected.encode("utf-8"))
+
+                # Guest is busy, still trying to deal with an invitation
+                elif self.users[guest]['notification'] == 'BUSY':
+                    response_host = f"📞 {guest} IS DEALING WITH ANOTHER INVITE, TRY AGAIN LATER\n"
+
+                    # Get host connection
+                    conn_host = self.get_user_connection(host)
+                    if conn_host:
+                        conn_host.send(response_host.encode("utf-8"))
 
         # Guest not found or offline
         response = "💣 PLAYER NOT FOUND OR OFFLINE\n"
@@ -469,6 +504,11 @@ class SAI_Server:
         # Update status for online
         self.users[player_self]['status'] = 'ONLINE'
         self.save_users_to_file()
+
+    # Set user status to available to receive notifications
+    def set_invite_status_available(self, self_user):
+        self.users[self_user]['notification'] = 'AVAILABLE'
+        self.save_users_to_file()   # Save user data to database file
 
     # Log file event addition
     def log_event(self, event):

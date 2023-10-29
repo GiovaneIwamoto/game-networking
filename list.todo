@@ -1,3 +1,1 @@
-Build simultaneous invitations and multiple invitations
-Build timeout round playing
-Fix host invite and wait for response, must wait response only from guest, other user cannot send him an invitation
+Fix while playing, receive a notification, declined, left match and bug

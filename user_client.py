@@ -587,6 +587,10 @@ class User_Client:
                 # Send anything back to SAI to reload client response receiver
                 self.send_message("NOTHING")
 
+                # User received a notification, did not answer and now is back available at lobby
+                command = f"AVAILABLE {logged_in_username}"
+                self.send_message(command)
+
                 self.notification = False  # Remove notification
                 self.input_ack_neg = False  # Remove ack and neg as valid option at input
                 self.invite_expired = False  # Set invite as not expired
