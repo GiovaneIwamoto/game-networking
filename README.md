@@ -2,23 +2,29 @@
 
 ### **OVERVIEW**
 
-Hybrid peer-to-peer application to represent an online gaming network, consisting of a server and multiple players. The interaction between the server and users follows a client-server style, while the interaction between players is peer-to-peer.
+Hybrid peer-to-peer application to represent an online gaming network, consisting of a server and multiple players. The interaction between the server and users follows a client-server style, while the interaction between players is peer-to-peer. SAI Server is responsible for managing data related to connections made between clients. For this purpose, it has been defined to store hosts, ports, online users, and users who are currently playing. With this data being stored by SAI, the application have all the necessary information to enable the hybrid peer-to-peer functionality. It does not interfere in the connection between clients once it has been established; at that point, all logic is at the discretion of the clients.
 
 ### **GAME PREVIEW**
 
-<img src="./pictures/start_game.png" width="435.2" height="324" alt="Start Game">
+Each player has 25 choices to make, where in each round, each player must submit their choice through a valid row and column. When both players send their responses, all the animals at each coordinate in the ocean will be revealed, along with what each player caught by choosing a position. Based on the caught animal, points are assigned to the total score.
+
+<img src="./pictures/start_game.png" width="391.68" height="291.6" alt="Start Game">
 
 ---
 
-<img src="./pictures/mid_game.png" width="596.8" height="277.6" alt="Mid Game">
+Each animal has a predetermined score and a rarity of being generated at each ocean coordinate. The player's total score is the sum of the value of each caught animal throughout the 5 rounds.
+
+<img src="./pictures/mid_game.png" width="537.12" height="249.84" alt="Mid Game">
 
 ---
 
-<img src="./pictures/end_game.png" width="648.32" height="272.64" alt="End Game">
+After the five rounds, the game displays the match information, and the peer-to-peer connection between the players is terminated, returning to the main menu.
+
+<img src="./pictures/end_game.png" width="583.488" height="245.376" alt="End Game">
 
 ### **GAME DOCUMENTATION**
 
-The complete game documentation, including game interactions explanations and protocols, can be found in the _documentation_ file available in `Portuguese [PT-BR]`.
+The complete game documentation, including game interactions explanations and protocols, can be found in the `app_doc` file available in `Portuguese [PT-BR]`.
 
 ### **HOW TO RUN**
 
