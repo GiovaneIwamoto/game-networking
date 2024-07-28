@@ -1,0 +1,5 @@
+{"giovane": {"password": "12345", "status": "OFFLINE", "ip": "127.0.0.1", "port": 51946, "notification": "AVAILABLE"}}
+{"john": {"password": "12345", "status": "OFFLINE", "ip": "127.0.0.1", "port": 51947, "notification": "AVAILABLE"}}
+{"mary": {"password": "12345", "status": "OFFLINE", "ip": "127.0.0.1", "port": 51977, "notification": "AVAILABLE"}}
+{"marc": {"password": "12345", "status": "OFFLINE", "ip": "127.0.0.1", "port": 51979, "notification": "AVAILABLE"}}
+{"bryan": {"password": "123", "status": "OFFLINE", "ip": "127.0.0.1", "port": 51981, "notification": "AVAILABLE"}}
