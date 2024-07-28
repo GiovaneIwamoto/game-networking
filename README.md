@@ -2,7 +2,10 @@
 
 ### **OVERVIEW**
 
-Hybrid peer-to-peer application to represent an online gaming network, consisting of a server and multiple players. The interaction between the server and users follows a client-server style, while the interaction between players is peer-to-peer. SAI Server is responsible for managing data related to connections made between clients. For this purpose, it has been defined to store hosts, ports, online users, and users who are currently playing. With this data being stored by SAI, the application have all the necessary information to enable the hybrid peer-to-peer functionality. It does not interfere in the connection between clients once it has been established; at that point, all logic is at the discretion of the clients.
+Hybrid peer-to-peer application to represent an online gaming network, consisting of a server and multiple players. The interaction between the server and users follows a client-server style, while the interaction between players is peer-to-peer. SAI Server is responsible for managing data related to connections made between clients. For this purpose, it has been defined to store hosts, ports, online users, and users who are currently playing. With this data being stored by SAI, the application have all the necessary information to enable the hybrid peer-to-peer functionality.
+
+> [!NOTE]
+> SAI does not interfere in the connection between clients once it has been established; at that point, all logic is at the discretion of the clients.
 
 [![Icons](https://skillicons.dev/icons?i=py,powershell,vscode&theme=dark)](https://skillicons.dev)
 
