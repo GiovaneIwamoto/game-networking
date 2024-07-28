@@ -4,20 +4,20 @@
 
 Hybrid peer-to-peer application to represent an online gaming network, consisting of a server and multiple players. The interaction between the server and users follows a client-server style, while the interaction between players is peer-to-peer. SAI Server is responsible for managing data related to connections made between clients. For this purpose, it has been defined to store hosts, ports, online users, and users who are currently playing.
 
-> [!NOTE]
-> With this data being stored by SAI, the application have all the necessary information to enable the hybrid peer-to-peer functionality. It does not interfere in the connection between clients once it has been established; at that point, all logic is at the discretion of the clients.
-
 [![Icons](https://skillicons.dev/icons?i=py,powershell,vscode&theme=dark)](https://skillicons.dev)
+
+> [!IMPORTANT]
+> With this data being stored by SAI, the application have all the necessary information to enable the hybrid peer-to-peer functionality. It does not interfere in the connection between clients once it has been established; at that point, all logic is at the discretion of the clients.
 
 ---
 
 ### **GAME PREVIEW**
 
+Each player has 25 choices to make, where in each round, each player must submit their choice through a valid row and column. When both players send their responses, all the animals at each coordinate in the ocean will be revealed, along with what each player caught by choosing a position. Based on the caught animal, points are assigned to score.
+
 https://github.com/user-attachments/assets/45a31bf2-5500-4b61-af74-e755ddfd07f8
 
-Each player has 25 choices to make, where in each round, each player must submit their choice through a valid row and column. When both players send their responses, all the animals at each coordinate in the ocean will be revealed, along with what each player caught by choosing a position. Based on the caught animal, points are assigned to the total score.
-
-> [!IMPORTANT]
+> [!NOTE]
 > Each animal has a predetermined score and a rarity of being generated at each ocean coordinate. The player's total score is the sum of the value of each caught animal throughout the 5 rounds. After the five rounds, the game displays the match information, and the peer-to-peer connection between the players is terminated, returning to the main menu.
 
 ---
