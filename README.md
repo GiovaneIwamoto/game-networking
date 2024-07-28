@@ -6,9 +6,6 @@ Hybrid peer-to-peer application to represent an online gaming network, consistin
 
 [![Icons](https://skillicons.dev/icons?i=py,powershell,vscode&theme=dark)](https://skillicons.dev)
 
-> [!TIP]
-> The complete game documentation including game interactions explanations and protocols can be found in the doc file available in Portuguese PT-BR.
-
 ---
 
 ### **GAME PREVIEW**
@@ -41,6 +38,9 @@ To clean the database and the game.log file, if necessary, you can use the follo
 ```ruby
 $ python clean_script.py
 ```
+
+> [!TIP]
+> The complete game documentation including game interactions explanations and protocols can be found in the doc file available in Portuguese PT-BR.
 
 ---
 
