@@ -13,6 +13,8 @@ Hybrid peer-to-peer application to represent an online gaming network, consistin
 
 ### **GAME PREVIEW**
 
+https://github.com/user-attachments/assets/45a31bf2-5500-4b61-af74-e755ddfd07f8
+
 Each player has 25 choices to make, where in each round, each player must submit their choice through a valid row and column. When both players send their responses, all the animals at each coordinate in the ocean will be revealed, along with what each player caught by choosing a position. Based on the caught animal, points are assigned to the total score.
 
 > [!IMPORTANT]
