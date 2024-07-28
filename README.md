@@ -6,6 +6,9 @@ Hybrid peer-to-peer application to represent an online gaming network, consistin
 
 [![Icons](https://skillicons.dev/icons?i=py,powershell,vscode&theme=dark)](https://skillicons.dev)
 
+> [!TIP]
+> The complete game documentation including game interactions explanations and protocols can be found in the doc file available in Portuguese PT-BR.
+
 ---
 
 ### **GAME PREVIEW**
@@ -17,16 +20,9 @@ Each player has 25 choices to make, where in each round, each player must submit
 
 ---
 
-> [!TIP]
-> The complete game documentation, including game interactions explanations and protocols, can be found in the app_doc file available in Portuguese [PT-BR].
-
----
-
 ### **HOW TO RUN**
 
-It is important to note that the interface relies heavily on the emojis present in your operating system and the shell itself for a better experience. We recommend using terminals that support these types of characters, such as VSCode's terminal.
-
-The project is built in Python and is easily executable. First, you need to run the SAI Server in the terminal using the following command:
+It is important to note that the interface relies heavily on the emojis present in your operating system and the shell itself for a better experience. We recommend using terminals that support these types of characters, such as VSCode's terminal. The project is built in Python and is easily executable. First, you need to run the SAI Server in the terminal using the following command:
 
 ```ruby
 $ python sai_server.py
